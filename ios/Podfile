@@ -1,0 +1,14 @@
+# Uncomment the next line to define a global platform for your project
+platform :ios, '13.0'
+
+# CocoaPods analytics
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  #flutter_application_path = '../'
+  #eval(File.read(File.join(flutter_application_path, '.flutter-plugins-dependencies')), binding)
+
+end
