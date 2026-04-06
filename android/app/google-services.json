@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "287638259773",
+    "project_id": "niraszpos-cc942",
+    "storage_bucket": "niraszpos-cc942.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:287638259773:android:be45633e7153a70f7e8254",
+        "android_client_info": {
+          "package_name": "com.example.niraszpos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvs2hugz6jm3pcLIfC9C9uZzjrGnOH8cU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
