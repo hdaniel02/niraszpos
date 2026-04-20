@@ -156,11 +156,11 @@ class _PosScreenState extends State<PosScreen> {
           behavior: SnackBarBehavior.floating,
         ),
       );
+    } finally {
+      setState(() {
+        isCheckingOut = false;
+      });
     }
-
-    setState(() {
-      isCheckingOut = false;
-    });
   }
 
   Widget buildProductCard(Product product) {
@@ -336,6 +336,12 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: softBackground,
@@ -417,8 +423,7 @@ class _PosScreenState extends State<PosScreen> {
                                 },
                                 decoration: InputDecoration(
                                   hintText: "Search products...",
-                                  prefixIcon:
-                                      const Icon(Icons.search_rounded),
+                                  prefixIcon: const Icon(Icons.search_rounded),
                                   filled: true,
                                   fillColor: Colors.white,
                                   border: OutlineInputBorder(
@@ -463,7 +468,8 @@ class _PosScreenState extends State<PosScreen> {
                                                   borderRadius:
                                                       BorderRadius.circular(22),
                                                   border: Border.all(
-                                                      color: cardBorder),
+                                                    color: cardBorder,
+                                                  ),
                                                 ),
                                                 child: const Column(
                                                   mainAxisAlignment:
@@ -498,7 +504,8 @@ class _PosScreenState extends State<PosScreen> {
                                                 ),
                                                 itemBuilder: (context, index) {
                                                   return buildProductCard(
-                                                      products[index]);
+                                                    products[index],
+                                                  );
                                                 },
                                               ),
                               ),
@@ -541,8 +548,7 @@ class _PosScreenState extends State<PosScreen> {
                                         color: const Color(0xFFF8FAFC),
                                         borderRadius:
                                             BorderRadius.circular(20),
-                                        border:
-                                            Border.all(color: cardBorder),
+                                        border: Border.all(color: cardBorder),
                                       ),
                                       child: const Column(
                                         mainAxisAlignment:

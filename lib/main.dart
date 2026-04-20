@@ -8,6 +8,7 @@ import 'views/users/manage_users_screen.dart';
 import 'views/product/products_screen.dart';
 import 'views/pos/pos_screen.dart';
 import 'views/sales/sales_history_screen.dart';
+import 'views/profile/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,7 +43,7 @@ class MyApp extends StatelessWidget {
 
           case "/dashboard":
             final args = settings.arguments as Map<String, dynamic>?;
-            final role = args?['role'] ?? "guest";
+            final role = (args?['role'] ?? "guest").toString();
             return MaterialPageRoute(
               builder: (_) => DashboardScreen(role: role),
             );
@@ -65,13 +66,18 @@ class MyApp extends StatelessWidget {
             );
 
           case "/sales":
-  return MaterialPageRoute(
-    builder: (_) => SalesHistoryScreen(),
-  );
+            return MaterialPageRoute(
+              builder: (_) => SalesHistoryScreen(),
+            );
 
           case "/users":
             return MaterialPageRoute(
               builder: (_) => ManageUsersScreen(),
+            );
+
+          case "/profile":
+            return MaterialPageRoute(
+              builder: (_) => const ProfileScreen(),
             );
 
           default:

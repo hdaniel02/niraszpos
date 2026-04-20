@@ -13,16 +13,6 @@ class Product {
     required this.category,
   });
 
-  factory Product.fromMap(Map<String, dynamic> map, String docId) {
-    return Product(
-      id: docId,
-      name: map['name'] ?? '',
-      price: (map['price'] ?? 0).toDouble(),
-      stock: (map['stock'] ?? 0).toInt(),
-      category: map['category'] ?? '',
-    );
-  }
-
   Map<String, dynamic> toMap() {
     return {
       'name': name,
@@ -30,5 +20,16 @@ class Product {
       'stock': stock,
       'category': category,
     };
+  }
+
+  // ✅ MUST MATCH THIS ORDER
+  factory Product.fromMap(String id, Map<String, dynamic> map) {
+    return Product(
+      id: id,
+      name: map['name'] ?? '',
+      price: (map['price'] ?? 0).toDouble(),
+      stock: map['stock'] ?? 0,
+      category: map['category'] ?? '',
+    );
   }
 }

@@ -134,6 +134,12 @@ class DashboardScreen extends StatelessWidget {
             "icon": Icons.inventory_2_rounded,
             "route": "/products",
           },
+          {
+            "title": "Sales History",
+            "subtitle": "Review past sales and transactions.",
+            "icon": Icons.receipt_long_rounded,
+            "route": "/sales",
+          },
         ];
       case "cashier":
         return [
@@ -443,22 +449,46 @@ class DashboardScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: () => handleLogout(context),
-                    icon: const Icon(Icons.logout_rounded, size: 18),
-                    label: const Text("Logout"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryBlue,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 14,
+                  Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pushNamed(context, "/profile");
+                        },
+                        icon:
+                            const Icon(Icons.person_outline_rounded, size: 18),
+                        label: const Text("Profile"),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          side: const BorderSide(color: cardBorder),
+                          foregroundColor: primaryBlue,
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                      const SizedBox(width: 10),
+                      ElevatedButton.icon(
+                        onPressed: () => handleLogout(context),
+                        icon: const Icon(Icons.logout_rounded, size: 18),
+                        label: const Text("Logout"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryBlue,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
