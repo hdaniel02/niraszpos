@@ -12,12 +12,21 @@ dependencies:
     sdk: flutter
 
   # Firebase packages
-  firebase_core: ^4.6.0
-  firebase_auth: ^6.3.0
-  cloud_firestore: ^6.2.0
+  firebase_core: ^4.7.0
+  firebase_auth: ^6.4.0
+  cloud_firestore: ^6.3.0
 
   # Other packages
   cupertino_icons: ^1.0.8
+  firebase_storage: ^13.3.0
+  image_picker: ^1.2.2
+  pdf: ^3.12.0
+  printing: ^5.14.3
+  flutter_markdown: ^0.7.7+1
+  google_generative_ai: ^0.4.7
+  shared_preferences: ^2.5.5
+  http: ^1.6.0
+  fl_chart: ^1.2.0
 
 dev_dependencies:
   flutter_test:

@@ -43,6 +43,10 @@ class AuthViewModel {
       await _firestore.collection('users').doc(uid).set({
         'email': user.email,
         'role': user.role,
+        if (user.name != null) 'name': user.name,
+        if (user.phoneNumber != null) 'phoneNumber': user.phoneNumber,
+        if (user.passcode != null) 'passcode': user.passcode,
+        'createdAt': FieldValue.serverTimestamp(),
       });
 
       // Step 3: sign out from secondary auth
@@ -59,6 +63,9 @@ class AuthViewModel {
     await _firestore.collection('users').doc(user.uid).update({
       'email': user.email,
       'role': user.role,
+      if (user.name != null) 'name': user.name,
+      if (user.phoneNumber != null) 'phoneNumber': user.phoneNumber,
+      if (user.passcode != null) 'passcode': user.passcode,
     });
   }
 

@@ -46,6 +46,7 @@ post_install do |installer|
 
     # Remove bad Xcode 16 flag from build settings
     target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
       ['OTHER_CFLAGS', 'OTHER_CPLUSPLUSFLAGS'].each do |key|
         value = config.build_settings[key]
 

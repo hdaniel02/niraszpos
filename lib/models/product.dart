@@ -4,6 +4,8 @@ class Product {
   final double price;
   final int stock;
   final String category;
+  final String barcode;
+  final String imageUrl;
 
   Product({
     required this.id,
@@ -11,6 +13,8 @@ class Product {
     required this.price,
     required this.stock,
     required this.category,
+    this.barcode = '',
+    this.imageUrl = '',
   });
 
   Map<String, dynamic> toMap() {
@@ -19,17 +23,20 @@ class Product {
       'price': price,
       'stock': stock,
       'category': category,
+      'barcode': barcode,
+      'imageUrl': imageUrl,
     };
   }
 
-  // ✅ MUST MATCH THIS ORDER
   factory Product.fromMap(String id, Map<String, dynamic> map) {
     return Product(
       id: id,
       name: map['name'] ?? '',
       price: (map['price'] ?? 0).toDouble(),
-      stock: map['stock'] ?? 0,
+      stock: (map['stock'] ?? 0) as int,
       category: map['category'] ?? '',
+      barcode: map['barcode'] ?? '',
+      imageUrl: map['imageUrl'] ?? '',
     );
   }
 }

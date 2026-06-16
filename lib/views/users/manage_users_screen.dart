@@ -1,32 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/user.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 
-class ManageUsersScreen extends StatelessWidget {
+class ManageUsersScreen extends StatefulWidget {
+  const ManageUsersScreen({super.key});
+
+  @override
+  State<ManageUsersScreen> createState() => _ManageUsersScreenState();
+}
+
+class _ManageUsersScreenState extends State<ManageUsersScreen> {
   final AuthViewModel authVM = AuthViewModel();
 
-  ManageUsersScreen({super.key});
+  String _searchQuery = "";
+  String _selectedRoleFilter = "All";
 
-  static const Color primaryBlue = Color(0xFF1E3A8A);
+  static const Color primaryBlue = Color(0xFF059669); // Changed to system green
   static const Color softBackground = Color(0xFFF8FAFC);
   static const Color cardBorder = Color(0xFFE2E8F0);
   static const Color textPrimary = Color(0xFF0F172A);
   static const Color textSecondary = Color(0xFF64748B);
 
   Color getRoleColor(String role) {
-    switch (role.toLowerCase()) {
-      case 'admin':
-      case 'superadmin':
-        return const Color(0xFFDC2626);
-      case 'manager':
-        return const Color(0xFF2563EB);
-      case 'cashier':
-        return const Color(0xFF059669);
-      case 'owner':
-        return const Color(0xFF7C3AED);
-      default:
-        return const Color(0xFF64748B);
-    }
+    return primaryBlue;
   }
 
   IconData getRoleIcon(String role) {
@@ -43,66 +40,6 @@ class ManageUsersScreen extends StatelessWidget {
       default:
         return Icons.person_rounded;
     }
-  }
-
-  Widget buildInfoCard({
-    required IconData icon,
-    required String title,
-    required String value,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: cardBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: const Color(0xFFDBEAFE),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: primaryBlue, size: 28),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget buildRoleChip(String role) {
@@ -126,27 +63,35 @@ class ManageUsersScreen extends StatelessWidget {
   }
 
   void _showUserDialog(BuildContext context, {AppUser? user}) {
-    final TextEditingController emailController =
-        TextEditingController(text: user?.email ?? "");
+    final TextEditingController nameController = TextEditingController(text: user?.name ?? "");
+    final TextEditingController emailController = TextEditingController(text: user?.email ?? "");
     final TextEditingController passwordController = TextEditingController();
+    final TextEditingController passcodeController = TextEditingController(text: user?.passcode ?? "");
+    final TextEditingController phoneController = TextEditingController(text: user?.phoneNumber ?? "");
 
     String selectedRole = user?.role ?? "cashier";
     bool isEdit = user != null;
     bool obscurePassword = true;
+
+    String? nameError;
+    String? emailError;
+    String? passwordError;
+    String? passcodeError;
+    String? phoneError;
 
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
+            bool isCashier = selectedRole.toLowerCase() == 'cashier';
+
             return Dialog(
               backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               child: Container(
-                width: 420,
-                padding: const EdgeInsets.all(24),
+                width: 650,
+                padding: const EdgeInsets.all(32),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -155,259 +100,319 @@ class ManageUsersScreen extends StatelessWidget {
                       Row(
                         children: [
                           Container(
-                            width: 52,
-                            height: 52,
+                            width: 64,
+                            height: 64,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFDBEAFE),
-                              borderRadius: BorderRadius.circular(16),
+                              color: const Color(0xFFDCFCE7),
+                              borderRadius: BorderRadius.circular(18),
                             ),
                             child: Icon(
                               isEdit ? Icons.edit_rounded : Icons.person_add_alt_1_rounded,
                               color: primaryBlue,
+                              size: 32,
                             ),
                           ),
-                          const SizedBox(width: 14),
+                          const SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  isEdit ? "Edit User" : "Add New User",
+                                  isEdit ? "Update User Details" : "Create New User",
                                   style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w700,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w800,
                                     color: textPrimary,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 6),
                                 Text(
                                   isEdit
-                                      ? "Update user details and role."
-                                      : "Create a new account and assign a role.",
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: textSecondary,
-                                  ),
+                                      ? "Modify account information and role access."
+                                      : "Fill in the details to assign a new system role.",
+                                  style: const TextStyle(fontSize: 15, color: textSecondary),
                                 ),
                               ],
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        "Email",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          hintText: "Enter user email",
-                          prefixIcon: const Icon(Icons.email_outlined),
-                          filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: cardBorder),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: cardBorder),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: primaryBlue,
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (!isEdit) ...[
-                        const SizedBox(height: 18),
-                        const Text(
-                          "Password",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: passwordController,
-                          obscureText: obscurePassword,
-                          decoration: InputDecoration(
-                            hintText: "Enter password",
-                            prefixIcon: const Icon(Icons.lock_outline_rounded),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                obscurePassword
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  obscurePassword = !obscurePassword;
-                                });
-                              },
-                            ),
-                            filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(color: cardBorder),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(color: cardBorder),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(
-                                color: primaryBlue,
-                                width: 1.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 18),
-                      const Text(
-                        "Role",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        value: selectedRole,
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.badge_outlined),
-                          filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: cardBorder),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: cardBorder),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: primaryBlue,
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                        items: const [
-                          DropdownMenuItem(value: "admin", child: Text("Admin")),
-                          DropdownMenuItem(value: "manager", child: Text("Manager")),
-                          DropdownMenuItem(value: "cashier", child: Text("Cashier")),
-                          DropdownMenuItem(value: "owner", child: Text("Owner")),
-                        ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() {
-                              selectedRole = value;
-                            });
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text("Full Name", style: TextStyle(fontWeight: FontWeight.w700, color: textPrimary)),
+                                const SizedBox(height: 10),
+                                TextField(
+                                  controller: nameController,
+                                  decoration: InputDecoration(
+                                    hintText: "Enter full name",
+                                    errorText: nameError,
+                                    prefixIcon: const Icon(Icons.person_outline_rounded, color: textSecondary),
+                                    filled: true,
+                                    fillColor: const Color(0xFFF8FAFC),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: primaryBlue, width: 2)),
+                                  ),
+                                  onChanged: (_) {
+                                    if (nameError != null) setState(() => nameError = null);
+                                  },
+                                ),
+                                const SizedBox(height: 24),
+                                const Text("Phone Number", style: TextStyle(fontWeight: FontWeight.w700, color: textPrimary)),
+                                const SizedBox(height: 10),
+                                TextField(
+                                  controller: phoneController,
+                                  keyboardType: TextInputType.phone,
+                                  decoration: InputDecoration(
+                                    hintText: "Enter phone number",
+                                    errorText: phoneError,
+                                    prefixIcon: const Icon(Icons.phone_outlined, color: textSecondary),
+                                    filled: true,
+                                    fillColor: const Color(0xFFF8FAFC),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: primaryBlue, width: 2)),
+                                  ),
+                                  onChanged: (_) {
+                                    if (phoneError != null) setState(() => phoneError = null);
+                                  },
+                                ),
+                                const SizedBox(height: 24),
+                                const Text("System Role", style: TextStyle(fontWeight: FontWeight.w700, color: textPrimary)),
+                                const SizedBox(height: 10),
+                                DropdownButtonFormField<String>(
+                                  value: selectedRole,
+                                  decoration: InputDecoration(
+                                    prefixIcon: const Icon(Icons.badge_outlined, color: textSecondary),
+                                    filled: true,
+                                    fillColor: const Color(0xFFF8FAFC),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: primaryBlue, width: 2)),
+                                  ),
+                                  items: const [
+                                    DropdownMenuItem(value: "admin", child: Text("Admin")),
+                                    DropdownMenuItem(value: "manager", child: Text("Manager")),
+                                    DropdownMenuItem(value: "cashier", child: Text("Cashier")),
+                                    DropdownMenuItem(value: "owner", child: Text("Owner")),
+                                  ],
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      setState(() {
+                                        selectedRole = value;
+                                        // Auto-generate cashier email to hide it
+                                        if (selectedRole == 'cashier' && nameController.text.isNotEmpty) {
+                                          emailController.text = "${nameController.text.trim().replaceAll(' ', '.').toLowerCase()}@cashier.niraszpos.com";
+                                        }
+                                      });
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 24),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (!isCashier) ...[
+                                  const Text("Email Address", style: TextStyle(fontWeight: FontWeight.w700, color: textPrimary)),
+                                  const SizedBox(height: 10),
+                                  TextField(
+                                    controller: emailController,
+                                    keyboardType: TextInputType.emailAddress,
+                                    decoration: InputDecoration(
+                                      hintText: "user@niraszpos.com",
+                                      errorText: emailError,
+                                      prefixIcon: const Icon(Icons.email_outlined, color: textSecondary),
+                                      filled: true,
+                                      fillColor: const Color(0xFFF8FAFC),
+                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: primaryBlue, width: 2)),
+                                    ),
+                                    onChanged: (_) {
+                                      if (emailError != null) setState(() => emailError = null);
+                                    },
+                                  ),
+                                  const SizedBox(height: 24),
+                                ],
+                                
+                                if (isCashier) ...[
+                                  const Text("Login Passcode", style: TextStyle(fontWeight: FontWeight.w700, color: textPrimary)),
+                                  const SizedBox(height: 10),
+                                  TextField(
+                                    controller: passcodeController,
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                    maxLength: 6,
+                                    decoration: InputDecoration(
+                                      hintText: "Enter 6-digit code",
+                                      errorText: passcodeError,
+                                      counterText: "",
+                                      prefixIcon: const Icon(Icons.pin_outlined, color: textSecondary),
+                                      filled: true,
+                                      fillColor: const Color(0xFFF8FAFC),
+                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: primaryBlue, width: 2)),
+                                    ),
+                                    onChanged: (_) {
+                                      if (passcodeError != null) setState(() => passcodeError = null);
+                                    },
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    "Cashiers only require a name and 6-digit passcode. Their email is auto-generated securely in the background.",
+                                    style: TextStyle(fontSize: 13, color: textSecondary, height: 1.4),
+                                  ),
+                                ] else if (!isEdit) ...[
+                                  const Text("Password", style: TextStyle(fontWeight: FontWeight.w700, color: textPrimary)),
+                                  const SizedBox(height: 10),
+                                  TextField(
+                                    controller: passwordController,
+                                    obscureText: obscurePassword,
+                                    decoration: InputDecoration(
+                                      hintText: "Secure password",
+                                      errorText: passwordError,
+                                      prefixIcon: const Icon(Icons.lock_outline_rounded, color: textSecondary),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: textSecondary),
+                                        onPressed: () => setState(() => obscurePassword = !obscurePassword),
+                                      ),
+                                      filled: true,
+                                      fillColor: const Color(0xFFF8FAFC),
+                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: primaryBlue, width: 2)),
+                                    ),
+                                    onChanged: (_) {
+                                      if (passwordError != null) setState(() => passwordError = null);
+                                    },
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 40),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          SizedBox(
+                            height: 52,
+                            width: 140,
                             child: OutlinedButton(
                               onPressed: () => Navigator.pop(context),
                               style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: cardBorder),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
+                                foregroundColor: textSecondary,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                side: const BorderSide(color: cardBorder, width: 1.5),
                               ),
-                              child: const Text("Cancel"),
+                              child: const Text("Cancel", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
+                          const SizedBox(width: 16),
+                          SizedBox(
+                            height: 52,
+                            width: 180,
                             child: ElevatedButton(
                               onPressed: () async {
-                                final email = emailController.text.trim();
+                                setState(() {
+                                  nameError = null;
+                                  emailError = null;
+                                  passwordError = null;
+                                  passcodeError = null;
+                                  phoneError = null;
+                                });
+
+                                bool hasError = false;
+
+                                final name = nameController.text.trim();
+                                if (name.isEmpty) {
+                                  setState(() => nameError = "Name cannot be empty");
+                                  hasError = true;
+                                }
+
+                                final phone = phoneController.text.trim();
+                                if (phone.isEmpty) {
+                                  setState(() => phoneError = "Phone number cannot be empty");
+                                  hasError = true;
+                                }
+
+                                String email = emailController.text.trim();
+                                if (isCashier) {
+                                  email = "${name.replaceAll(' ', '.').toLowerCase()}@cashier.niraszpos.com";
+                                }
+
                                 final password = passwordController.text.trim();
+                                final passcode = passcodeController.text.trim();
 
-                                if (email.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text("Email cannot be empty"),
-                                    ),
-                                  );
-                                  return;
+                                if (!isCashier) {
+                                  if (email.isEmpty) {
+                                    setState(() => emailError = "Email cannot be empty");
+                                    hasError = true;
+                                  } else {
+                                    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                                    if (!emailRegex.hasMatch(email)) {
+                                      setState(() => emailError = "Please enter a valid email address");
+                                      hasError = true;
+                                    }
+                                  }
                                 }
 
-                                if (!isEdit && password.length < 6) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        "Password must be at least 6 characters",
-                                      ),
-                                    ),
-                                  );
-                                  return;
+                                if (isCashier) {
+                                  if (passcode.length != 6 || int.tryParse(passcode) == null) {
+                                    setState(() => passcodeError = "Passcode must be a valid 6-digit number");
+                                    hasError = true;
+                                  }
+                                } else {
+                                  if (!isEdit && password.length < 6) {
+                                    setState(() => passwordError = "Password must be at least 6 characters");
+                                    hasError = true;
+                                  }
                                 }
+
+                                if (hasError) return;
 
                                 final appUser = AppUser(
                                   uid: user?.uid ?? "",
                                   email: email,
                                   role: selectedRole,
+                                  passcode: isCashier ? passcode : null,
+                                  name: name,
+                                  phoneNumber: phone,
                                 );
 
                                 try {
                                   if (isEdit) {
                                     await authVM.updateUser(appUser);
                                   } else {
-                                    await authVM.createUser(appUser, password);
+                                    // For cashier, use a securely generated dummy password for Firebase Auth
+                                    final finalPassword = isCashier ? "CashierSecurePass@123!" : password;
+                                    await authVM.createUser(appUser, finalPassword);
                                   }
-
                                   Navigator.pop(context);
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        isEdit
-                                            ? "User updated successfully"
-                                            : "User added successfully",
-                                      ),
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isEdit ? "User updated successfully" : "User added successfully"), behavior: SnackBarBehavior.floating));
                                 } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text("Error: $e"),
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), behavior: SnackBarBehavior.floating));
                                 }
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: primaryBlue,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                               ),
-                              child: Text(isEdit ? "Update User" : "Add User"),
+                              child: Text(isEdit ? "Save Changes" : "Create User", style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                             ),
                           ),
                         ],
@@ -422,6 +427,7 @@ class ManageUsersScreen extends StatelessWidget {
       },
     );
   }
+
 
   void _showDeleteDialog(BuildContext context, AppUser user) {
     showDialog(
@@ -529,104 +535,6 @@ class ManageUsersScreen extends StatelessWidget {
     );
   }
 
-  Widget buildUserCard(BuildContext context, AppUser user) {
-    final roleColor = getRoleColor(user.role);
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: cardBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: roleColor.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Icon(
-              getRoleIcon(user.role),
-              color: roleColor,
-              size: 30,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user.email,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                buildRoleChip(user.role),
-              ],
-            ),
-          ),
-          PopupMenuButton<String>(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            onSelected: (value) {
-              if (value == 'edit') {
-                _showUserDialog(context, user: user);
-              } else if (value == 'delete') {
-                _showDeleteDialog(context, user);
-              }
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem(
-                value: 'edit',
-                child: Row(
-                  children: [
-                    Icon(Icons.edit_outlined, size: 18),
-                    SizedBox(width: 10),
-                    Text("Edit"),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'delete',
-                child: Row(
-                  children: [
-                    Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                    SizedBox(width: 10),
-                    Text("Delete"),
-                  ],
-                ),
-              ),
-            ],
-            child: Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: cardBorder),
-              ),
-              child: const Icon(Icons.more_horiz_rounded, color: textSecondary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -640,7 +548,7 @@ class ManageUsersScreen extends StatelessWidget {
         foregroundColor: Colors.white,
         elevation: 0,
         icon: const Icon(Icons.person_add_alt_1_rounded),
-        label: const Text("Add User"),
+        label: const Text("Create User"),
       ),
       body: SafeArea(
         child: StreamBuilder<List<AppUser>>(
@@ -648,15 +556,19 @@ class ManageUsersScreen extends StatelessWidget {
           builder: (context, snapshot) {
             List<AppUser> users = snapshot.data ?? [];
 
-            int adminCount = users
-                .where((u) => u.role.toLowerCase() == 'admin' || u.role.toLowerCase() == 'superadmin')
-                .length;
-            int managerCount =
-                users.where((u) => u.role.toLowerCase() == 'manager').length;
-            int cashierCount =
-                users.where((u) => u.role.toLowerCase() == 'cashier').length;
-            int ownerCount =
-                users.where((u) => u.role.toLowerCase() == 'owner').length;
+            if (_searchQuery.isNotEmpty) {
+              final query = _searchQuery.toLowerCase();
+              users = users.where((u) {
+                return (u.name?.toLowerCase().contains(query) ?? false) ||
+                       u.email.toLowerCase().contains(query) ||
+                       (u.phoneNumber?.toLowerCase().contains(query) ?? false) ||
+                       u.role.toLowerCase().contains(query);
+              }).toList();
+            }
+
+            if (_selectedRoleFilter != "All") {
+              users = users.where((u) => u.role.toLowerCase() == _selectedRoleFilter.toLowerCase()).toList();
+            }
 
             return Column(
               children: [
@@ -674,7 +586,7 @@ class ManageUsersScreen extends StatelessWidget {
                         width: 52,
                         height: 52,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFDBEAFE),
+                          color: const Color(0xFFDCFCE7),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: const Icon(
@@ -715,76 +627,114 @@ class ManageUsersScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            int crossAxisCount = 1;
-                            if (constraints.maxWidth > 1100) {
-                              crossAxisCount = 4;
-                            } else if (constraints.maxWidth > 800) {
-                              crossAxisCount = 2;
-                            }
 
-                            final summaryItems = [
-                              {
-                                "title": "Total Users",
-                                "value": users.length.toString(),
-                                "icon": Icons.groups_rounded,
-                              },
-                              {
-                                "title": "Admins",
-                                "value": adminCount.toString(),
-                                "icon": Icons.admin_panel_settings_rounded,
-                              },
-                              {
-                                "title": "Managers",
-                                "value": managerCount.toString(),
-                                "icon": Icons.manage_accounts_rounded,
-                              },
-                              {
-                                "title": "Cashiers / Owners",
-                                "value": "${cashierCount + ownerCount}",
-                                "icon": Icons.badge_rounded,
-                              },
-                            ];
-
-                            return GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: summaryItems.length,
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: crossAxisCount,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 16,
-                                childAspectRatio: 2.6,
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "User Accounts",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: textPrimary,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    "Manage account access and assigned roles for each user.",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: textSecondary,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              itemBuilder: (context, index) {
-                                final item = summaryItems[index];
-                                return buildInfoCard(
-                                  icon: item["icon"] as IconData,
-                                  title: item["title"] as String,
-                                  value: item["value"] as String,
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 28),
-                        const Text(
-                          "User Accounts",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          "Manage account access and assigned roles for each user.",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: textSecondary,
-                          ),
+                            ),
+                            const SizedBox(width: 16),
+                            Row(
+                              children: [
+                                PopupMenuButton<String>(
+                                  color: Colors.white,
+                                  surfaceTintColor: Colors.white,
+                                  elevation: 8,
+                                  position: PopupMenuPosition.under,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    side: const BorderSide(color: cardBorder, width: 1),
+                                  ),
+                                  onSelected: (value) {
+                                    setState(() {
+                                      _selectedRoleFilter = value;
+                                    });
+                                  },
+                                  itemBuilder: (context) => [
+                                    "All",
+                                    "Admin",
+                                    "Manager",
+                                    "Cashier",
+                                    "Owner"
+                                  ].map((role) => PopupMenuItem(
+                                    value: role,
+                                    child: Text(
+                                      role == "All" ? "All Roles" : role,
+                                      style: TextStyle(
+                                        color: _selectedRoleFilter == role ? primaryBlue : textPrimary,
+                                        fontWeight: _selectedRoleFilter == role ? FontWeight.w700 : FontWeight.w500,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  )).toList(),
+                                  child: Container(
+                                    height: 40,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: cardBorder),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.filter_list_rounded, size: 20, color: textSecondary),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _selectedRoleFilter == "All" ? "Filter by Role" : "Role: $_selectedRoleFilter",
+                                          style: const TextStyle(fontSize: 14, color: textPrimary, fontWeight: FontWeight.w500),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                SizedBox(
+                                  width: 260,
+                                  height: 40,
+                                  child: TextField(
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _searchQuery = value;
+                                      });
+                                    },
+                                    style: const TextStyle(fontSize: 14),
+                                    decoration: InputDecoration(
+                                      hintText: "Search users...",
+                                      hintStyle: const TextStyle(fontSize: 14, color: textSecondary),
+                                      prefixIcon: const Icon(Icons.search_rounded, color: textSecondary, size: 20),
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: cardBorder)),
+                                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: cardBorder)),
+                                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 18),
                         if (snapshot.connectionState == ConnectionState.waiting)
@@ -837,7 +787,7 @@ class ManageUsersScreen extends StatelessWidget {
                                 ),
                                 SizedBox(height: 6),
                                 Text(
-                                  "Tap the Add User button to create your first account.",
+                                  "Tap the Create User button to create your first account.",
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: textSecondary,
@@ -847,16 +797,112 @@ class ManageUsersScreen extends StatelessWidget {
                             ),
                           )
                         else
-                          ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: users.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 14),
-                            itemBuilder: (context, index) {
-                              final user = users[index];
-                              return buildUserCard(context, user);
-                            },
+                          Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(color: cardBorder),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(22),
+                              child: LayoutBuilder(
+                                builder: (context, constraints) {
+                                  return SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                                      child: DataTable(
+                                        headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
+                                        dividerThickness: 0,
+                                        dataRowMinHeight: 60,
+                                        dataRowMaxHeight: 60,
+                                        headingTextStyle: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          color: textSecondary,
+                                          fontSize: 13,
+                                        ),
+                                        dataTextStyle: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          color: textPrimary,
+                                          fontSize: 14,
+                                        ),
+                                        columns: const [
+                                          DataColumn(label: Text("Role")),
+                                          DataColumn(label: Text("Full Name")),
+                                          DataColumn(label: Text("Email")),
+                                          DataColumn(label: Text("Phone Number")),
+                                          DataColumn(label: Text("Actions")),
+                                        ],
+                                        rows: users.map((user) {
+                                          return DataRow(
+                                            cells: [
+                                              DataCell(
+                                                Row(
+                                                  children: [
+                                                    Icon(getRoleIcon(user.role), size: 18, color: getRoleColor(user.role)),
+                                                    const SizedBox(width: 8),
+                                                    Text(user.role[0].toUpperCase() + user.role.substring(1).toLowerCase()),
+                                                  ],
+                                                )
+                                              ),
+                                      DataCell(Text(user.name ?? "-")),
+                                      DataCell(Text(user.email)),
+                                      DataCell(Text(user.phoneNumber ?? "-")),
+                                      DataCell(
+                                        PopupMenuButton<String>(
+                                          color: Colors.white,
+                                          surfaceTintColor: Colors.white,
+                                          elevation: 8,
+                                          position: PopupMenuPosition.under,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                            side: const BorderSide(color: cardBorder, width: 1),
+                                          ),
+                                          onSelected: (value) {
+                                            if (value == 'edit') {
+                                              _showUserDialog(context, user: user);
+                                            } else if (value == 'delete') {
+                                              _showDeleteDialog(context, user);
+                                            }
+                                          },
+                                          itemBuilder: (context) => const [
+                                            PopupMenuItem(
+                                              value: 'edit',
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.edit_outlined, size: 18, color: textPrimary),
+                                                  SizedBox(width: 10),
+                                                  Text("Edit", style: TextStyle(color: textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+                                                ],
+                                              ),
+                                            ),
+                                            PopupMenuItem(
+                                              value: 'delete',
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                                  SizedBox(width: 10),
+                                                  Text("Delete", style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600, fontSize: 14)),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            child: const Icon(Icons.more_vert_rounded, color: textSecondary, size: 22),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                                    ),
+                                  );
+                                }
+                              ),
+                            ),
                           ),
                       ],
                     ),

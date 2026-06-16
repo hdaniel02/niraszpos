@@ -3,12 +3,13 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'firebase_options.dart';
 import 'views/login/login_screen.dart';
-import 'views/dashboard/dashboard_screen.dart';
+import 'views/shell/app_shell.dart';
 import 'views/users/manage_users_screen.dart';
 import 'views/product/products_screen.dart';
 import 'views/pos/pos_screen.dart';
 import 'views/sales/sales_history_screen.dart';
 import 'views/profile/profile_screen.dart';
+import 'views/shifts/shifts_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,7 +46,7 @@ class MyApp extends StatelessWidget {
             final args = settings.arguments as Map<String, dynamic>?;
             final role = (args?['role'] ?? "guest").toString();
             return MaterialPageRoute(
-              builder: (_) => DashboardScreen(role: role),
+              builder: (_) => AppShell(role: role),
             );
 
           case "/pos":
@@ -66,8 +67,10 @@ class MyApp extends StatelessWidget {
             );
 
           case "/sales":
+            final args = settings.arguments as Map<String, dynamic>?;
+            final role = (args?['role'] ?? "guest").toString();
             return MaterialPageRoute(
-              builder: (_) => SalesHistoryScreen(),
+              builder: (_) => SalesHistoryScreen(role: role),
             );
 
           case "/users":
@@ -78,6 +81,11 @@ class MyApp extends StatelessWidget {
           case "/profile":
             return MaterialPageRoute(
               builder: (_) => const ProfileScreen(),
+            );
+
+          case "/shifts":
+            return MaterialPageRoute(
+              builder: (_) => const ShiftsScreen(),
             );
 
           default:

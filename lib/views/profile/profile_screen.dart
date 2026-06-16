@@ -60,147 +60,133 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Container(
-          width: 420,
-          padding: const EdgeInsets.all(24),
+          width: 600,
+          padding: const EdgeInsets.all(32),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Edit Profile",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  "Name",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    hintText: "Enter your name",
-                    prefixIcon: const Icon(Icons.person_outline_rounded),
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: cardBorder),
+                Row(
+                  children: [
+                    Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDBEAFE),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: const Icon(Icons.manage_accounts_rounded, color: primaryBlue, size: 28),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: cardBorder),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                        color: primaryBlue,
-                        width: 1.5,
+                    const SizedBox(width: 18),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Edit Profile", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: textPrimary)),
+                          SizedBox(height: 4),
+                          Text("Update your personal details below.", style: TextStyle(fontSize: 14, color: textSecondary)),
+                        ],
                       ),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  "Phone Number",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    hintText: "Enter phone number",
-                    prefixIcon: const Icon(Icons.phone_outlined),
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: cardBorder),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: cardBorder),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                        color: primaryBlue,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
                 Row(
                   children: [
                     Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Full Name", style: TextStyle(fontWeight: FontWeight.w700, color: textPrimary)),
+                          const SizedBox(height: 10),
+                          TextField(
+                            controller: nameController,
+                            decoration: InputDecoration(
+                              hintText: "Enter your name",
+                              prefixIcon: const Icon(Icons.person_outline_rounded, color: textSecondary),
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: primaryBlue, width: 2)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Phone Number", style: TextStyle(fontWeight: FontWeight.w700, color: textPrimary)),
+                          const SizedBox(height: 10),
+                          TextField(
+                            controller: phoneController,
+                            keyboardType: TextInputType.phone,
+                            decoration: InputDecoration(
+                              hintText: "Enter phone number",
+                              prefixIcon: const Icon(Icons.phone_outlined, color: textSecondary),
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: primaryBlue, width: 2)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 40),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    SizedBox(
+                      height: 52,
+                      width: 140,
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          side: const BorderSide(color: cardBorder),
+                          foregroundColor: textSecondary,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          side: const BorderSide(color: cardBorder, width: 1.5),
                         ),
-                        child: const Text("Cancel"),
+                        child: const Text("Cancel", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
+                    const SizedBox(width: 16),
+                    SizedBox(
+                      height: 52,
+                      child: ElevatedButton.icon(
                         onPressed: () async {
                           try {
                             await profileVM.updateProfile(
                               name: nameController.text.trim(),
                               phoneNumber: phoneController.text.trim(),
                             );
-
                             if (!mounted) return;
                             Navigator.pop(context);
                             await loadProfile();
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Profile updated successfully"),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Profile updated successfully")));
                           } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Update failed: $e"),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Update failed: $e")));
                           }
                         },
+                        icon: const Icon(Icons.save_rounded, size: 20),
+                        label: const Text("Save Changes", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryBlue,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
                           elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         ),
-                        child: const Text("Save"),
                       ),
                     ),
                   ],
@@ -224,194 +210,148 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           child: Container(
-            width: 420,
-            padding: const EdgeInsets.all(24),
+            width: 600,
+            padding: const EdgeInsets.all(32),
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    "Change Password",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    "New Password",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: passwordController,
-                    obscureText: obscure1,
-                    decoration: InputDecoration(
-                      hintText: "Enter new password",
-                      prefixIcon: const Icon(Icons.lock_outline_rounded),
-                      suffixIcon: IconButton(
-                        onPressed: () {
-                          setDialogState(() {
-                            obscure1 = !obscure1;
-                          });
-                        },
-                        icon: Icon(
-                          obscure1
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
+                  Row(
+                    children: [
+                      Container(
+                        width: 54,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: const Icon(Icons.lock_reset_rounded, color: Colors.red, size: 28),
+                      ),
+                      const SizedBox(width: 18),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Change Password", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: textPrimary)),
+                            SizedBox(height: 4),
+                            Text("Secure your account with a new password.", style: TextStyle(fontSize: 14, color: textSecondary)),
+                          ],
                         ),
                       ),
-                      filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: cardBorder),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: cardBorder),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: primaryBlue,
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Confirm Password",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: confirmPasswordController,
-                    obscureText: obscure2,
-                    decoration: InputDecoration(
-                      hintText: "Confirm new password",
-                      prefixIcon: const Icon(Icons.lock_reset_rounded),
-                      suffixIcon: IconButton(
-                        onPressed: () {
-                          setDialogState(() {
-                            obscure2 = !obscure2;
-                          });
-                        },
-                        icon: Icon(
-                          obscure2
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: cardBorder),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: cardBorder),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: primaryBlue,
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
                   Row(
                     children: [
                       Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("New Password", style: TextStyle(fontWeight: FontWeight.w700, color: textPrimary)),
+                            const SizedBox(height: 10),
+                            TextField(
+                              controller: passwordController,
+                              obscureText: obscure1,
+                              decoration: InputDecoration(
+                                hintText: "Enter new password",
+                                prefixIcon: const Icon(Icons.lock_outline_rounded, color: textSecondary),
+                                suffixIcon: IconButton(
+                                  icon: Icon(obscure1 ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: textSecondary),
+                                  onPressed: () => setDialogState(() => obscure1 = !obscure1),
+                                ),
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: primaryBlue, width: 2)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Confirm Password", style: TextStyle(fontWeight: FontWeight.w700, color: textPrimary)),
+                            const SizedBox(height: 10),
+                            TextField(
+                              controller: confirmPasswordController,
+                              obscureText: obscure2,
+                              decoration: InputDecoration(
+                                hintText: "Confirm new password",
+                                prefixIcon: const Icon(Icons.lock_reset_rounded, color: textSecondary),
+                                suffixIcon: IconButton(
+                                  icon: Icon(obscure2 ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: textSecondary),
+                                  onPressed: () => setDialogState(() => obscure2 = !obscure2),
+                                ),
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
+                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: primaryBlue, width: 2)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      SizedBox(
+                        height: 52,
+                        width: 140,
                         child: OutlinedButton(
                           onPressed: () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            side: const BorderSide(color: cardBorder),
+                            foregroundColor: textSecondary,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            side: const BorderSide(color: cardBorder, width: 1.5),
                           ),
-                          child: const Text("Cancel"),
+                          child: const Text("Cancel", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
+                      const SizedBox(width: 16),
+                      SizedBox(
+                        height: 52,
+                        child: ElevatedButton.icon(
                           onPressed: () async {
                             final password = passwordController.text.trim();
                             final confirm = confirmPasswordController.text.trim();
-
                             if (password.length < 6) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    "Password must be at least 6 characters",
-                                  ),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Password must be at least 6 characters")));
                               return;
                             }
-
                             if (password != confirm) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Passwords do not match"),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Passwords do not match")));
                               return;
                             }
-
                             try {
-                              await profileVM.changePassword(
-                                newPassword: password,
-                              );
-
+                              await profileVM.changePassword(newPassword: password);
                               if (!mounted) return;
                               Navigator.pop(context);
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Password updated successfully"),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Password updated successfully")));
                             } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("Password update failed: $e"),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Update failed: $e")));
                             }
                           },
+                          icon: const Icon(Icons.check_circle_rounded, size: 20),
+                          label: const Text("Update Password", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryBlue,
+                            backgroundColor: Colors.red,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
                             elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           ),
-                          child: const Text("Update"),
                         ),
                       ),
                     ],
@@ -645,24 +585,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  onPressed: showChangePasswordDialog,
-                                  icon: const Icon(Icons.lock_reset_rounded),
-                                  label: const Text("Change Password"),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
+                              if (profile!.role != 'cashier') ...[
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    onPressed: showChangePasswordDialog,
+                                    icon: const Icon(Icons.lock_reset_rounded),
+                                    label: const Text("Change Password"),
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      side: const BorderSide(color: cardBorder),
                                     ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    side: const BorderSide(color: cardBorder),
                                   ),
                                 ),
-                              ),
+                              ],
                             ],
                           ),
                         ),
