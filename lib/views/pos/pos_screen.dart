@@ -18,7 +18,7 @@ class _PosScreenState extends State<PosScreen> {
   final ProductViewModel productVM = ProductViewModel();
   final SalesViewModel salesVM = SalesViewModel();
 
-  static const Color primaryBlue = Color(0xFF1E3A8A);
+  static const Color primaryBlue = Color(0xFF059669); // Emerald Green system
   static const Color softBackground = Color(0xFFF8FAFC);
   static const Color cardBorder = Color(0xFFE2E8F0);
   static const Color textPrimary = Color(0xFF0F172A);
@@ -44,6 +44,47 @@ class _PosScreenState extends State<PosScreen> {
         _pageFocusNode.requestFocus();
       }
     });
+  }
+
+  String _getFormattedDate() {
+    final now = DateTime.now();
+    final weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    final weekday = weekdays[now.weekday - 1];
+    final month = months[now.month - 1];
+    final day = now.day;
+    
+    String suffix = 'th';
+    if (day >= 11 && day <= 13) {
+      suffix = 'th';
+    } else {
+      switch (day % 10) {
+        case 1: suffix = 'st'; break;
+        case 2: suffix = 'nd'; break;
+        case 3: suffix = 'rd'; break;
+      }
+    }
+    
+    return "$weekday, $day$suffix $month ${now.year}";
+  }
+
+  String _getUserWelcomeName() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return "Cashier";
+    if (user.displayName != null && user.displayName!.isNotEmpty) {
+      return user.displayName!;
+    }
+    if (user.email != null) {
+      final namePart = user.email!.split('@').first;
+      if (namePart.isNotEmpty) {
+        return namePart[0].toUpperCase() + namePart.substring(1);
+      }
+    }
+    return "Cashier";
   }
 
   void addToCart(Product product) {
@@ -221,7 +262,7 @@ class _PosScreenState extends State<PosScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFFDBEAFE)
+                          ? const Color(0xFFD1FAE5)
                           : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
@@ -1277,7 +1318,7 @@ class _PosScreenState extends State<PosScreen> {
       return Container(
         width: width,
         height: height,
-        color: const Color(0xFFDBEAFE),
+        color: const Color(0xFFECFDF5),
         alignment: Alignment.center,
         child: const Icon(Icons.inventory_2_rounded, color: primaryBlue, size: 48),
       );
@@ -1296,7 +1337,7 @@ class _PosScreenState extends State<PosScreen> {
         );
       } catch (e) {
         imageWidget = Container(
-          color: const Color(0xFFDBEAFE),
+          color: const Color(0xFFECFDF5),
           alignment: Alignment.center,
           child: const Icon(Icons.broken_image_rounded, color: Colors.red, size: 48),
         );
@@ -1308,7 +1349,7 @@ class _PosScreenState extends State<PosScreen> {
         width: width,
         height: height,
         errorBuilder: (_, __, ___) => Container(
-          color: const Color(0xFFDBEAFE),
+          color: const Color(0xFFECFDF5),
           alignment: Alignment.center,
           child: const Icon(Icons.inventory_2_rounded, color: primaryBlue, size: 48),
         ),
@@ -1349,7 +1390,7 @@ class _PosScreenState extends State<PosScreen> {
                 decoration: BoxDecoration(
                   color: product.imageUrl.isNotEmpty
                       ? Colors.transparent
-                      : const Color(0xFFDBEAFE),
+                      : const Color(0xFFECFDF5),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: _buildProductImage(
@@ -1372,27 +1413,31 @@ class _PosScreenState extends State<PosScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "RM ${product.price.toStringAsFixed(2)}",
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: primaryBlue,
-                  ),
-                ),
-                if (outOfStock)
-                  const Text(
-                    "Out of Stock",
-                    style: TextStyle(
-                      color: Colors.red,
+            SizedBox(
+              width: double.infinity,
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    "RM ${product.price.toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      fontSize: 12,
+                      color: primaryBlue,
                     ),
                   ),
-              ],
+                  if (outOfStock)
+                    const Text(
+                      "Out of Stock",
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ],
         ),
@@ -1519,132 +1564,76 @@ class _PosScreenState extends State<PosScreen> {
               return matchesSearch && matchesCategory;
             }).toList();
 
-            return Column(
+            return Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(bottom: BorderSide(color: cardBorder)),
-                  ),
-                  child: Row(
+                Expanded(
+                  flex: 3,
+                  child: Column(
                     children: [
+                      // Header Row containing Welcome details and Date
                       Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFDBEAFE),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(
-                          Icons.point_of_sale_rounded,
-                          color: primaryBlue,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      const Expanded(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                        color: Colors.transparent,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Point of Sale",
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: textPrimary,
+                              _getFormattedDate(),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: textSecondary,
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text(
-                              "Select products, manage cart, and complete checkout.",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: textSecondary,
+                              "Welcome, ${_getUserWelcomeName()}!",
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: textPrimary,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Row(
-                    children: [
+                      // Left content pane (categories and products grid)
                       Expanded(
-                        flex: 3,
                         child: Padding(
-                          padding: const EdgeInsets.all(24),
+                          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
                           child: Column(
                             children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextField(
-                                      controller: searchController,
-                                      focusNode: _searchFocusNode,
-                                      onChanged: (value) {
-                                        setState(() {
-                                          searchText = value;
-                                        });
-                                      },
-                                      decoration: InputDecoration(
-                                        hintText: "Search products...",
-                                        prefixIcon: const Icon(Icons.search_rounded),
-                                        filled: true,
-                                        fillColor: Colors.white,
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(18),
-                                          borderSide: const BorderSide(color: cardBorder),
-                                        ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(18),
-                                          borderSide: const BorderSide(color: cardBorder),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(18),
-                                          borderSide: const BorderSide(
-                                            color: primaryBlue,
-                                            width: 1.5,
-                                          ),
-                                        ),
-                                      ),
+                              // Full width search bar
+                              TextField(
+                                controller: searchController,
+                                focusNode: _searchFocusNode,
+                                onChanged: (value) {
+                                  setState(() {
+                                    searchText = value;
+                                  });
+                                },
+                                decoration: InputDecoration(
+                                  hintText: "Search products...",
+                                  prefixIcon: const Icon(Icons.search_rounded),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8FAFC),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                    borderSide: const BorderSide(color: cardBorder),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                    borderSide: const BorderSide(color: cardBorder),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                    borderSide: const BorderSide(
+                                      color: primaryBlue,
+                                      width: 1.5,
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 14,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFECFDF5),
-                                      borderRadius: BorderRadius.circular(18),
-                                      border: Border.all(
-                                        color: const Color(0xFFA7F3D0),
-                                      ),
-                                    ),
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.qr_code_scanner_rounded,
-                                          size: 20,
-                                          color: Color(0xFF059669),
-                                        ),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          "Scanner Ready",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            color: Color(0xFF059669),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                               const SizedBox(height: 16),
                               SizedBox(
@@ -1746,168 +1735,168 @@ class _PosScreenState extends State<PosScreen> {
                           ),
                         ),
                       ),
+                    ],
+                  ),
+                ),
+                Container(
+                  width: 380,
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      left: BorderSide(color: cardBorder),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Cart",
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        "${getTotalItems()} item(s) selected",
+                        style: const TextStyle(color: textSecondary),
+                      ),
+                      const SizedBox(height: 18),
+                      Expanded(
+                        child: cart.isEmpty
+                            ? Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(24),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius:
+                                      BorderRadius.circular(20),
+                                  border: Border.all(color: cardBorder),
+                                ),
+                                child: const Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.shopping_cart_outlined,
+                                      size: 52,
+                                      color: textSecondary,
+                                    ),
+                                    SizedBox(height: 12),
+                                    Text(
+                                      "Your cart is empty",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: textPrimary,
+                                      ),
+                                    ),
+                                    SizedBox(height: 6),
+                                    Text(
+                                      "Select a product to begin a sale.",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ListView.separated(
+                                itemCount: cart.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 12),
+                                itemBuilder: (context, index) {
+                                  return buildCartItem(cart[index]);
+                                },
+                              ),
+                      ),
+                      const SizedBox(height: 18),
                       Container(
-                        width: 380,
-                        padding: const EdgeInsets.all(24),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          border: Border(
-                            left: BorderSide(color: cardBorder),
-                          ),
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: cardBorder),
                         ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              "Cart",
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: textPrimary,
-                              ),
+                            Row(
+                              children: [
+                                const Text(
+                                  "Total",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  "RM ${getTotal().toStringAsFixed(2)}",
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w700,
+                                    color: primaryBlue,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 6),
-                            Text(
-                              "${getTotalItems()} item(s) selected",
-                              style: const TextStyle(color: textSecondary),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                const Text(
+                                  "Payment",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  selectedPaymentMethod,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: textPrimary,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 18),
-                            Expanded(
-                              child: cart.isEmpty
-                                  ? Container(
-                                      width: double.infinity,
-                                      padding: const EdgeInsets.all(24),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF8FAFC),
-                                        borderRadius:
-                                            BorderRadius.circular(20),
-                                        border: Border.all(color: cardBorder),
-                                      ),
-                                      child: const Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.shopping_cart_outlined,
-                                            size: 52,
-                                            color: textSecondary,
-                                          ),
-                                          SizedBox(height: 12),
-                                          Text(
-                                            "Your cart is empty",
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w700,
-                                              color: textPrimary,
-                                            ),
-                                          ),
-                                          SizedBox(height: 6),
-                                          Text(
-                                            "Select a product to begin a sale.",
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              color: textSecondary,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  : ListView.separated(
-                                      itemCount: cart.length,
-                                      separatorBuilder: (_, __) =>
-                                          const SizedBox(height: 12),
-                                      itemBuilder: (context, index) {
-                                        return buildCartItem(cart[index]);
-                                      },
-                                    ),
-                            ),
-                            const SizedBox(height: 18),
-                            Container(
-                              padding: const EdgeInsets.all(18),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF8FAFC),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: cardBorder),
-                              ),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Text(
-                                        "Total",
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 52,
+                              child: ElevatedButton(
+                                onPressed:
+                                    isCheckingOut ? null : handleCheckout,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primaryBlue,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(26),
+                                  ),
+                                ),
+                                child: isCheckingOut
+                                    ? const SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child:
+                                            CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Text(
+                                        "Checkout",
                                         style: TextStyle(
                                           fontSize: 16,
-                                          color: textSecondary,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      Text(
-                                        "RM ${getTotal().toStringAsFixed(2)}",
-                                        style: const TextStyle(
-                                          fontSize: 22,
                                           fontWeight: FontWeight.w700,
-                                          color: primaryBlue,
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Row(
-                                    children: [
-                                      const Text(
-                                        "Payment",
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: textSecondary,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      Text(
-                                        selectedPaymentMethod,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w700,
-                                          color: textPrimary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 52,
-                                    child: ElevatedButton(
-                                      onPressed:
-                                          isCheckingOut ? null : handleCheckout,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: primaryBlue,
-                                        foregroundColor: Colors.white,
-                                        elevation: 0,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(16),
-                                        ),
-                                      ),
-                                      child: isCheckingOut
-                                          ? const SizedBox(
-                                              width: 22,
-                                              height: 22,
-                                              child:
-                                                  CircularProgressIndicator(
-                                                strokeWidth: 2.5,
-                                                color: Colors.white,
-                                              ),
-                                            )
-                                          : const Text(
-                                              "Checkout",
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                    ),
-                                  ),
-                                ],
                               ),
                             ),
                           ],

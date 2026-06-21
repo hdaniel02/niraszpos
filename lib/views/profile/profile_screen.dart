@@ -12,7 +12,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final ProfileViewModel profileVM = ProfileViewModel();
 
-  static const Color primaryBlue = Color(0xFF1E3A8A);
+  static const Color primaryBlue = Color(0xFF059669); // Emerald Green system
   static const Color softBackground = Color(0xFFF8FAFC);
   static const Color cardBorder = Color(0xFFE2E8F0);
   static const Color textPrimary = Color(0xFF0F172A);
@@ -76,7 +76,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       width: 54,
                       height: 54,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDBEAFE),
+                        color: const Color(0xFFECFDF5),
                         borderRadius: BorderRadius.circular(18),
                       ),
                       child: const Icon(Icons.manage_accounts_rounded, color: primaryBlue, size: 28),
@@ -383,7 +383,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFFDBEAFE),
+              color: const Color(0xFFECFDF5),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(icon, color: primaryBlue),
@@ -451,7 +451,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               width: 56,
                               height: 56,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFDBEAFE),
+                                color: const Color(0xFFECFDF5),
                                 borderRadius: BorderRadius.circular(18),
                               ),
                               child: const Icon(
@@ -510,7 +510,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   children: [
                                     CircleAvatar(
                                       radius: 42,
-                                      backgroundColor: const Color(0xFFDBEAFE),
+                                      backgroundColor: const Color(0xFFECFDF5),
                                       child: Text(
                                         profile!.name.isNotEmpty
                                             ? profile!.name[0].toUpperCase()

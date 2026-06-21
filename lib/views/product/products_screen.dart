@@ -1139,28 +1139,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
             return Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
                   decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(
-                      bottom: BorderSide(color: cardBorder),
-                    ),
+                    color: Colors.transparent,
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: lightGreen,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(
-                          Icons.inventory_2_rounded,
-                          color: primaryGreen,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
                       const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1182,6 +1166,47 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Container(
+                        width: 260,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: cardBorder),
+                        ),
+                        child: TextField(
+                          controller: searchController,
+                          textAlignVertical: TextAlignVertical.center,
+                          onChanged: (value) {
+                            setState(() {
+                              searchQuery = value;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            hintText: "Search products...",
+                            hintStyle: const TextStyle(fontSize: 13, color: textSecondary),
+                            prefixIcon: const Icon(Icons.search_rounded, size: 18, color: textSecondary),
+                            prefixIconConstraints: const BoxConstraints(minWidth: 36, minHeight: 38),
+                            suffixIcon: searchQuery.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear_rounded, size: 16, color: textSecondary),
+                                    onPressed: () {
+                                      searchController.clear();
+                                      setState(() {
+                                        searchQuery = '';
+                                      });
+                                    },
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  )
+                                : null,
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
                         ),
                       ),
                     ],
@@ -1331,43 +1356,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           ),
                         ),
                         const SizedBox(height: 18),
-                        // --- Search and Filter UI ---
-                        Row(
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: TextField(
-                                controller: searchController,
-                                onChanged: (value) {
-                                  setState(() {
-                                    searchQuery = value;
-                                  });
-                                },
-                                decoration: InputDecoration(
-                                  hintText: "Search products by name or barcode...",
-                                  prefixIcon: const Icon(Icons.search_rounded, color: textSecondary),
-                                  suffixIcon: searchQuery.isNotEmpty
-                                      ? IconButton(
-                                          icon: const Icon(Icons.clear_rounded, color: textSecondary),
-                                          onPressed: () {
-                                            searchController.clear();
-                                            setState(() {
-                                              searchQuery = '';
-                                            });
-                                          },
-                                        )
-                                      : null,
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
-                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
-                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: primaryGreen, width: 2)),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
+
                         
                         // Category Chips & Selection Actions Row
                         Row(

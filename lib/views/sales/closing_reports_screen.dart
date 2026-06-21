@@ -20,7 +20,7 @@ class _ClosingReportsScreenState extends State<ClosingReportsScreen> {
   final SalesViewModel salesVM = SalesViewModel();
   final ProductViewModel productVM = ProductViewModel();
 
-  static const Color primaryBlue = Color(0xFF1E3A8A);
+  static const Color primaryBlue = Color(0xFF059669); // Emerald Green system
   static const Color softBackground = Color(0xFFF8FAFC);
   static const Color cardBorder = Color(0xFFE2E8F0);
   static const Color textPrimary = Color(0xFF0F172A);
@@ -543,9 +543,15 @@ class _ClosingReportsScreenState extends State<ClosingReportsScreen> {
                 : allShifts;
 
             if (_searchQuery.isNotEmpty) {
-              shifts = shifts
-                  .where((s) => s.userName.toLowerCase().contains(_searchQuery.toLowerCase()))
-                  .toList();
+              final query = _searchQuery.toLowerCase();
+              shifts = shifts.where((s) {
+                final cashier = s.userName.toLowerCase();
+                final dateStr = formatDate(s.startTime);
+                final statusStr = s.endTime != null ? 'closed' : 'ongoing';
+                return cashier.contains(query) ||
+                    dateStr.contains(query) ||
+                    statusStr.contains(query);
+              }).toList();
             }
 
             if (_sortOption == 'Date: Newest') {
@@ -563,26 +569,12 @@ class _ClosingReportsScreenState extends State<ClosingReportsScreen> {
                   children: [
                     // Header Area
                     Container(
-                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
                       decoration: const BoxDecoration(
-                        color: Colors.white,
-                        border: Border(bottom: BorderSide(color: cardBorder)),
+                        color: Colors.transparent,
                       ),
                       child: Row(
                         children: [
-                          Container(
-                            width: 52,
-                            height: 52,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFDBEAFE),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Icon(
-                              Icons.assessment_rounded,
-                              color: primaryBlue,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
                           const Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -606,6 +598,57 @@ class _ClosingReportsScreenState extends State<ClosingReportsScreen> {
                               ],
                             ),
                           ),
+                          const SizedBox(width: 16),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 240,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: cardBorder),
+                                ),
+                                child: TextField(
+                                  textAlignVertical: TextAlignVertical.center,
+                                  onChanged: (val) => setState(() => _searchQuery = val),
+                                  decoration: const InputDecoration(
+                                    hintText: "Search cashier, date...",
+                                    hintStyle: TextStyle(fontSize: 13, color: textSecondary),
+                                    prefixIcon: Icon(Icons.search, size: 18, color: textSecondary),
+                                    prefixIconConstraints: BoxConstraints(minWidth: 36, minHeight: 38),
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Container(
+                                height: 38,
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: cardBorder),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: _sortOption,
+                                    icon: const Icon(Icons.keyboard_arrow_down, size: 16),
+                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: textPrimary),
+                                    items: ['Date: Newest', 'Date: Oldest'].map((e) {
+                                      return DropdownMenuItem(value: e, child: Text(e));
+                                    }).toList(),
+                                    onChanged: (val) {
+                                      if (val != null) setState(() => _sortOption = val);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -624,52 +667,7 @@ class _ClosingReportsScreenState extends State<ClosingReportsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Search & Sort bar
-                              Row(
-                                children: [
-                                  if (widget.role.toLowerCase() != 'cashier') ...[
-                                    Expanded(
-                                      child: Container(
-                                        height: 36,
-                                        decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(20)),
-                                        child: TextField(
-                                          textAlignVertical: TextAlignVertical.center,
-                                          onChanged: (val) => setState(() => _searchQuery = val),
-                                          decoration: const InputDecoration(
-                                            hintText: "Search cashier name...",
-                                            hintStyle: TextStyle(fontSize: 13, color: textSecondary),
-                                            prefixIcon: Icon(Icons.search, size: 18, color: textSecondary),
-                                            prefixIconConstraints: BoxConstraints(minWidth: 40, minHeight: 36),
-                                            border: InputBorder.none,
-                                            isDense: true,
-                                            contentPadding: EdgeInsets.zero,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                  ],
-                                  Container(
-                                    height: 36,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                                    decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(20)),
-                                    child: DropdownButtonHideUnderline(
-                                      child: DropdownButton<String>(
-                                        value: _sortOption,
-                                        icon: const Icon(Icons.keyboard_arrow_down, size: 16),
-                                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: textPrimary),
-                                        items: ['Date: Newest', 'Date: Oldest'].map((e) {
-                                          return DropdownMenuItem(value: e, child: Text(e));
-                                        }).toList(),
-                                        onChanged: (val) {
-                                          if (val != null) setState(() => _sortOption = val);
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
+
 
                               if (shifts.isEmpty)
                                 const Padding(
@@ -772,7 +770,7 @@ class _ClosingReportsScreenState extends State<ClosingReportsScreen> {
                                                       flex: 2,
                                                       child: Text(
                                                         "RM ${shiftTotalSales.toStringAsFixed(2)}",
-                                                        style: const TextStyle(fontWeight: FontWeight.bold, color: textPrimary, fontSize: 14),
+                                                        style: const TextStyle(fontWeight: FontWeight.bold, color: primaryBlue, fontSize: 14),
                                                         textAlign: TextAlign.center,
                                                       ),
                                                     ),

@@ -233,7 +233,7 @@ class PasscodeRequestsWidget extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.password_rounded, size: 48, color: Color(0xFF1E3A8A)),
+                const Icon(Icons.password_rounded, size: 48, color: Color(0xFF059669)),
                 const SizedBox(height: 24),
                 const Text("Set New Passcode", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
@@ -288,7 +288,7 @@ class PasscodeRequestsWidget extends StatelessWidget {
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
                           }
                         },
-                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E3A8A), foregroundColor: Colors.white),
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF059669), foregroundColor: Colors.white),
                         child: const Text("Confirm"),
                       ),
                     ),
@@ -332,7 +332,7 @@ class PasscodeRequestsWidget extends StatelessWidget {
                   child: Text(
                     newPasscode,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 36, letterSpacing: 8, fontWeight: FontWeight.w800, color: Color(0xFF1E3A8A)),
+                    style: const TextStyle(fontSize: 36, letterSpacing: 8, fontWeight: FontWeight.w800, color: Color(0xFF059669)),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -350,7 +350,7 @@ class PasscodeRequestsWidget extends StatelessWidget {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E3A8A),
+                      backgroundColor: const Color(0xFF059669),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),

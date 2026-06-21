@@ -60,7 +60,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     return toTitleCase(sale.cashierEmail);
   }
 
-  static const Color primaryBlue = Color(0xFF1E3A8A);
+  static const Color primaryBlue = Color(0xFF059669); // Emerald Green system
   static const Color softBackground = Color(0xFFF8FAFC);
   static const Color cardBorder = Color(0xFFE2E8F0);
   static const Color textPrimary = Color(0xFF0F172A);
@@ -725,96 +725,72 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
 
             return Column(
               children: [
-                // Header Area
-                Container(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(bottom: BorderSide(color: cardBorder)),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFDBEAFE),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(
-                          Icons.history_rounded,
-                          color: primaryBlue,
-                        ),
+                    // Header Area
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+                      decoration: const BoxDecoration(
+                        color: Colors.transparent,
                       ),
-                      const SizedBox(width: 14),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Sales History',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: textPrimary,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Search past transactions, view receipt details, and request or process refunds.',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Filters & Grid Area
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: cardBorder),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          // Search & Sort bar
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Sales History',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w700,
+                                    color: textPrimary,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Search past transactions, view receipt details, and request or process refunds.',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
                           Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Expanded(
-                                child: Container(
-                                  height: 36,
-                                  decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(20)),
-                                  child: TextField(
-                                    textAlignVertical: TextAlignVertical.center,
-                                    onChanged: (val) => setState(() => _searchQuery = val),
-                                    decoration: const InputDecoration(
-                                      hintText: "Search receipt, cashier, or payment method...",
-                                      hintStyle: TextStyle(fontSize: 13, color: textSecondary),
-                                      prefixIcon: Icon(Icons.search, size: 18, color: textSecondary),
-                                      prefixIconConstraints: BoxConstraints(minWidth: 40, minHeight: 36),
-                                      border: InputBorder.none,
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.zero,
-                                    ),
+                              Container(
+                                width: 260,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: cardBorder),
+                                ),
+                                child: TextField(
+                                  textAlignVertical: TextAlignVertical.center,
+                                  onChanged: (val) => setState(() => _searchQuery = val),
+                                  decoration: const InputDecoration(
+                                    hintText: "Search receipt, cashier...",
+                                    hintStyle: TextStyle(fontSize: 13, color: textSecondary),
+                                    prefixIcon: Icon(Icons.search, size: 18, color: textSecondary),
+                                    prefixIconConstraints: BoxConstraints(minWidth: 36, minHeight: 38),
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.zero,
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Container(
-                                height: 36,
+                                height: 38,
                                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                                decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(20)),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: cardBorder),
+                                ),
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton<String>(
                                     value: _sortOption,
@@ -831,7 +807,25 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
+
+                // Filters & Grid Area
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: cardBorder),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+
 
                           if (displaySales.isEmpty)
                             const Padding(

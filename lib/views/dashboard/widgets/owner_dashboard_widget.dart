@@ -176,9 +176,9 @@ class _OwnerDashboardWidgetState extends State<OwnerDashboardWidget> {
 
     return Row(
       children: [
-        Expanded(child: _buildMetricCard("Total Revenue", "\$${revThisWeek.toStringAsFixed(2)}", revGrowth >= 0, "${revGrowth.abs().toStringAsFixed(1)}%", "From last week")),
+        Expanded(child: _buildMetricCard("Total Revenue", "RM ${revThisWeek.toStringAsFixed(2)}", revGrowth >= 0, "${revGrowth.abs().toStringAsFixed(1)}%", "From last week")),
         const SizedBox(width: 20),
-        Expanded(child: _buildMetricCard("Total Orders", "\$${todaySalesAmount.toStringAsFixed(2)}", salesGrowth >= 0, "${salesGrowth.abs().toStringAsFixed(1)}%", "From yesterday")),
+        Expanded(child: _buildMetricCard("Total Orders", "RM ${todaySalesAmount.toStringAsFixed(2)}", salesGrowth >= 0, "${salesGrowth.abs().toStringAsFixed(1)}%", "From yesterday")),
         const SizedBox(width: 20),
         Expanded(child: _buildMetricCard("Total Customer", todayCustomerCount.toString(), customerGrowth >= 0, "${customerGrowth.abs().toStringAsFixed(1)}%", "From yesterday")),
         const SizedBox(width: 20),
@@ -297,7 +297,7 @@ class _OwnerDashboardWidgetState extends State<OwnerDashboardWidget> {
             children: [
               Row(
                 children: [
-                  Text("\$${totalRevenueSelected.toStringAsFixed(2)}", style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: textPrimary)),
+                  Text("RM ${totalRevenueSelected.toStringAsFixed(2)}", style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: textPrimary)),
                   const SizedBox(width: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -349,8 +349,8 @@ class _OwnerDashboardWidgetState extends State<OwnerDashboardWidget> {
                       reservedSize: 50,
                       interval: maxY / 4,
                       getTitlesWidget: (value, meta) {
-                        if (value == 0) return const Text('\$0', style: TextStyle(color: textSecondary, fontSize: 12));
-                        return Text('\$${(value / 1000).toStringAsFixed(1)}k', style: const TextStyle(color: textSecondary, fontSize: 12));
+                        if (value == 0) return const Text('RM 0', style: TextStyle(color: textSecondary, fontSize: 12));
+                        return Text('RM ${(value / 1000).toStringAsFixed(1)}k', style: const TextStyle(color: textSecondary, fontSize: 12));
                       },
                     ),
                   ),
@@ -496,7 +496,7 @@ class _OwnerDashboardWidgetState extends State<OwnerDashboardWidget> {
                         ],
                       ),
                     ),
-                    Text("\$${c.value.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold, color: textPrimary, fontSize: 15)),
+                    Text("RM ${c.value.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold, color: textPrimary, fontSize: 15)),
                   ],
                 );
               },
@@ -617,25 +617,60 @@ class _OwnerDashboardWidgetState extends State<OwnerDashboardWidget> {
                   child: DataTable(
                     headingRowColor: WidgetStateProperty.all(Colors.transparent),
                     dividerThickness: 0,
-                    columnSpacing: 20,
+                    columnSpacing: 16,
                     horizontalMargin: 0,
-                    columns: const [
-                      DataColumn(label: Text("Product Name", style: TextStyle(color: textSecondary, fontWeight: FontWeight.w600))),
-                      DataColumn(label: Text("Price", style: TextStyle(color: textSecondary, fontWeight: FontWeight.w600))),
-                      DataColumn(label: Text("Quantity Sold", style: TextStyle(color: textSecondary, fontWeight: FontWeight.w600))),
-                      DataColumn(label: Text("Total Revenue", style: TextStyle(color: textSecondary, fontWeight: FontWeight.w600))),
+                    columns: [
+                      DataColumn(
+                        label: Expanded(
+                          child: Center(
+                            child: Text("#", style: TextStyle(color: textSecondary, fontWeight: FontWeight.w600)),
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Expanded(
+                          child: Center(
+                            child: Text("Product Name", style: TextStyle(color: textSecondary, fontWeight: FontWeight.w600)),
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Expanded(
+                          child: Center(
+                            child: Text("Price", style: TextStyle(color: textSecondary, fontWeight: FontWeight.w600)),
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        numeric: true,
+                        label: Expanded(
+                          child: Center(
+                            child: Text("Qty Sold", style: TextStyle(color: textSecondary, fontWeight: FontWeight.w600)),
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Expanded(
+                          child: Center(
+                            child: Text("Total Revenue", style: TextStyle(color: textSecondary, fontWeight: FontWeight.w600)),
+                          ),
+                        ),
+                      ),
                     ],
-                    rows: topItems.map((item) {
+                    rows: List.generate(topItems.length, (index) {
+                      final item = topItems[index];
                       return DataRow(
                         cells: [
-                          DataCell(Text(item["name"], style: const TextStyle(fontWeight: FontWeight.w600, color: textPrimary))),
-                          DataCell(Text("\$${item["price"].toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.w600, color: textSecondary))),
-                          DataCell(Text(item["qty"].toString(), style: const TextStyle(fontWeight: FontWeight.w600, color: textPrimary))),
-                          DataCell(Text("\$${item["revenue"].toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.w600, color: greenTrend))),
+                          DataCell(Center(child: Text("${index + 1}", style: const TextStyle(fontWeight: FontWeight.w700, color: textSecondary)))),
+                          DataCell(Center(child: Text(item["name"], style: const TextStyle(fontWeight: FontWeight.w600, color: textPrimary)))),
+                          DataCell(Center(child: Text("RM ${item["price"].toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.w600, color: textSecondary)))),
+                          DataCell(Center(child: Text(item["qty"].toString(), style: const TextStyle(fontWeight: FontWeight.w700, color: textPrimary)))),
+                          DataCell(Center(child: Text("RM ${item["revenue"].toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.w600, color: greenTrend)))),
                         ],
                       );
-                    }).toList(),
+                    }),
                   ),
+
                 ),
               ),
             ),
@@ -678,11 +713,11 @@ class _OwnerDashboardWidgetState extends State<OwnerDashboardWidget> {
           Text(_topItemsFilter == 'Today' ? "Today's Breakdown" : "This Month's Breakdown", style: const TextStyle(color: textSecondary, fontSize: 13)),
           const SizedBox(height: 24),
           
-          _buildPaymentRow(Icons.money_rounded, "Cash", "\$${cash.toStringAsFixed(2)}", cashPct, const Color(0xFF22C55E)),
+          _buildPaymentRow(Icons.money_rounded, "Cash", "RM ${cash.toStringAsFixed(2)}", cashPct, const Color(0xFF22C55E)),
           const SizedBox(height: 20),
-          _buildPaymentRow(Icons.credit_card_rounded, "Credit Card", "\$${card.toStringAsFixed(2)}", cardPct, const Color(0xFF3B82F6)),
+          _buildPaymentRow(Icons.credit_card_rounded, "Credit Card", "RM ${card.toStringAsFixed(2)}", cardPct, const Color(0xFF3B82F6)),
           const SizedBox(height: 20),
-          _buildPaymentRow(Icons.qr_code_rounded, "QR Pay", "\$${qr.toStringAsFixed(2)}", qrPct, const Color(0xFFF59E0B)),
+          _buildPaymentRow(Icons.qr_code_rounded, "QR Pay", "RM ${qr.toStringAsFixed(2)}", qrPct, const Color(0xFFF59E0B)),
         ],
       ),
     );

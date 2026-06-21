@@ -396,16 +396,64 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
 
   Widget _buildEndShiftDrawer(String shiftId) {
     final cashController = TextEditingController();
-    final cardController = TextEditingController();
-    final qrController = TextEditingController();
     bool isLoadingDrawer = false;
     final ShiftViewModel shiftVM = ShiftViewModel();
 
     return StatefulBuilder(
       builder: (context, setModalState) {
+        Widget buildKeypadButton(String text, {IconData? icon}) {
+          return InkWell(
+            onTap: () {
+              setModalState(() {
+                if (text == "del") {
+                  if (cashController.text.isNotEmpty) {
+                    cashController.text = cashController.text.substring(0, cashController.text.length - 1);
+                  }
+                } else if (text == ".") {
+                  if (!cashController.text.contains(".")) {
+                    cashController.text += cashController.text.isEmpty ? "0." : ".";
+                  }
+                } else {
+                  if (cashController.text.contains(".")) {
+                    final parts = cashController.text.split(".");
+                    if (parts.length > 1 && parts[1].length >= 2) return;
+                  }
+                  if (cashController.text == "0") {
+                    cashController.text = text;
+                  } else {
+                    cashController.text += text;
+                  }
+                }
+              });
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Center(
+                child: icon != null
+                    ? Icon(icon, color: const Color(0xFF334155), size: 28)
+                    : Text(
+                        text,
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF334155),
+                        ),
+                      ),
+              ),
+            ),
+          );
+        }
+
         return Container(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 32,
+          padding: const EdgeInsets.only(
+            bottom: 32,
             top: 24,
             left: 24,
             right: 24,
@@ -414,79 +462,102 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 48,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(10),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 48,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                "End Shift",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1E3A8A),
+                const SizedBox(height: 24),
+                const Text(
+                  "End Shift",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF059669),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                "Enter the ending totals from your drawer and terminals",
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF64748B),
+                const SizedBox(height: 8),
+                const Text(
+                  "Enter the ending cash total from your drawer",
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF64748B),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 32),
-              
-              // Cash Input
-              TextField(
-                controller: cashController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: "Ending Cash (Drawer)",
-                  hintText: "0.00",
-                  prefixIcon: const Icon(Icons.attach_money_rounded, color: Colors.green),
-                  filled: true,
-                  fillColor: const Color(0xFFF8FAFC),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                const SizedBox(height: 32),
+                
+                // Cash Display styled like Start Shift
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Center(
+                    child: Text(
+                      cashController.text.isEmpty ? "RM 0.00" : "RM ${cashController.text}",
+                      style: const TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF059669),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Card Input
-              TextField(
-                controller: cardController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: "Ending Card (EDC Terminal)",
-                  hintText: "0.00",
-                  prefixIcon: const Icon(Icons.credit_card_rounded, color: Colors.blue),
-                  filled: true,
-                  fillColor: const Color(0xFFF8FAFC),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                
+                const SizedBox(height: 24),
+                // Custom Numeric Keypad
+                SizedBox(
+                  width: 320,
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          buildKeypadButton("1"),
+                          buildKeypadButton("2"),
+                          buildKeypadButton("3"),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          buildKeypadButton("4"),
+                          buildKeypadButton("5"),
+                          buildKeypadButton("6"),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          buildKeypadButton("7"),
+                          buildKeypadButton("8"),
+                          buildKeypadButton("9"),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          buildKeypadButton("."),
+                          buildKeypadButton("0"),
+                          buildKeypadButton("del", icon: Icons.backspace_outlined),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              
-              // QR Input
-              TextField(
-                controller: qrController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: "Ending QR (QR Terminal)",
-                  hintText: "0.00",
-                  prefixIcon: const Icon(Icons.qr_code_rounded, color: Colors.purple),
-                  filled: true,
-                  fillColor: const Color(0xFFF8FAFC),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-              ),
 
               const SizedBox(height: 32),
               Row(
@@ -509,13 +580,11 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
                           ? null
                           : () async {
                               double cashVal = double.tryParse(cashController.text.trim()) ?? 0.0;
-                              double cardVal = double.tryParse(cardController.text.trim()) ?? 0.0;
-                              double qrVal = double.tryParse(qrController.text.trim()) ?? 0.0;
                               
                               setModalState(() => isLoadingDrawer = true);
 
                               try {
-                                await shiftVM.endShift(shiftId, cashVal, cardVal, qrVal);
+                                await shiftVM.endShift(shiftId, cashVal, 0.0, 0.0);
                                 await FirebaseAuth.instance.signOut();
                                 if (!context.mounted) return;
                                 Navigator.pop(context); // Close drawer
@@ -541,10 +610,11 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
               ),
             ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   void navigateToTab(String label) {
     final index = _tabs.indexWhere((t) => t.label.toLowerCase() == label.toLowerCase());
@@ -791,9 +861,9 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
       message: collapsed ? 'Settings' : '',
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(22),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(22),
           onTap: () {
             if (profileIndex != -1) {
               setState(() {
@@ -809,7 +879,7 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
             ),
             decoration: BoxDecoration(
               color: isActive ? _activeItem : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(22),
             ),
             child: Row(
               mainAxisAlignment: collapsed
@@ -845,9 +915,9 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
       message: collapsed ? 'Logout' : '',
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(22),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(22),
           onTap: _handleLogout,
           splashColor: Colors.red.withValues(alpha: 0.10),
           child: Container(
@@ -891,16 +961,16 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
         message: collapsed ? 'Expand sidebar' : 'Collapse sidebar',
         child: Material(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(21),
           child: InkWell(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(21),
             onTap: () => setState(() => _isCollapsed = !_isCollapsed),
             splashColor: const Color(0xFFE2E8F0),
             child: Container(
               height: 42,
               decoration: BoxDecoration(
                 color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(21),
                 border: Border.all(
                   color: const Color(0xFFE2E8F0),
                 ),
@@ -933,7 +1003,7 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
                           key: ValueKey('expanded'),
                           size: 20,
                           color: Color(0xFF64748B),
-                        ),
+                         ),
                 ),
               ),
             ),
@@ -1001,7 +1071,7 @@ class _NavItemState extends State<_NavItem> {
             : _hovered
                 ? const Color(0xFFF1F5F9)
                 : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(22),
         border: active
             ? null
             : Border.all(color: Colors.transparent),

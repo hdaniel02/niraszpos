@@ -387,7 +387,7 @@ class _ShiftsScreenState extends State<ShiftsScreen> {
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text("NiraszPOS", style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF1E3A8A))),
+                    pw.Text("NiraszPOS", style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF059669))),
                     pw.SizedBox(height: 4),
                     pw.Text("Shift Tracking & Audit Report", style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF0F172A))),
                   ],

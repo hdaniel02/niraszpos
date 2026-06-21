@@ -573,28 +573,12 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
             return Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
                   decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(
-                      bottom: BorderSide(color: cardBorder),
-                    ),
+                    color: Colors.transparent,
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFDCFCE7),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(
-                          Icons.people_alt_rounded,
-                          color: primaryBlue,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
                       const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -618,6 +602,91 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                           ],
                         ),
                       ),
+                      const SizedBox(width: 16),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          PopupMenuButton<String>(
+                            color: Colors.white,
+                            surfaceTintColor: Colors.white,
+                            elevation: 8,
+                            position: PopupMenuPosition.under,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: const BorderSide(color: cardBorder, width: 1),
+                            ),
+                            onSelected: (value) {
+                              setState(() {
+                                _selectedRoleFilter = value;
+                              });
+                            },
+                            itemBuilder: (context) => [
+                              "All",
+                              "Admin",
+                              "Manager",
+                              "Cashier",
+                              "Owner"
+                            ].map((role) => PopupMenuItem(
+                              value: role,
+                              child: Text(
+                                role == "All" ? "All Roles" : role,
+                                style: TextStyle(
+                                  color: _selectedRoleFilter == role ? primaryBlue : textPrimary,
+                                  fontWeight: _selectedRoleFilter == role ? FontWeight.w700 : FontWeight.w500,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            )).toList(),
+                            child: Container(
+                              height: 38,
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: cardBorder),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.filter_list_rounded, size: 20, color: textSecondary),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _selectedRoleFilter == "All" ? "Filter by Role" : "Role: $_selectedRoleFilter",
+                                    style: const TextStyle(fontSize: 13, color: textPrimary, fontWeight: FontWeight.w500),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            width: 240,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: cardBorder),
+                            ),
+                            child: TextField(
+                              textAlignVertical: TextAlignVertical.center,
+                              onChanged: (value) {
+                                setState(() {
+                                  _searchQuery = value;
+                                });
+                              },
+                              style: const TextStyle(fontSize: 13),
+                              decoration: InputDecoration(
+                                hintText: "Search users...",
+                                hintStyle: const TextStyle(fontSize: 13, color: textSecondary),
+                                prefixIcon: const Icon(Icons.search_rounded, color: textSecondary, size: 18),
+                                prefixIconConstraints: const BoxConstraints(minWidth: 36, minHeight: 38),
+                                border: InputBorder.none,
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -628,113 +697,21 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
 
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "User Accounts",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w700,
-                                      color: textPrimary,
-                                    ),
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    "Manage account access and assigned roles for each user.",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Row(
-                              children: [
-                                PopupMenuButton<String>(
-                                  color: Colors.white,
-                                  surfaceTintColor: Colors.white,
-                                  elevation: 8,
-                                  position: PopupMenuPosition.under,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    side: const BorderSide(color: cardBorder, width: 1),
-                                  ),
-                                  onSelected: (value) {
-                                    setState(() {
-                                      _selectedRoleFilter = value;
-                                    });
-                                  },
-                                  itemBuilder: (context) => [
-                                    "All",
-                                    "Admin",
-                                    "Manager",
-                                    "Cashier",
-                                    "Owner"
-                                  ].map((role) => PopupMenuItem(
-                                    value: role,
-                                    child: Text(
-                                      role == "All" ? "All Roles" : role,
-                                      style: TextStyle(
-                                        color: _selectedRoleFilter == role ? primaryBlue : textPrimary,
-                                        fontWeight: _selectedRoleFilter == role ? FontWeight.w700 : FontWeight.w500,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  )).toList(),
-                                  child: Container(
-                                    height: 40,
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: cardBorder),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.filter_list_rounded, size: 20, color: textSecondary),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          _selectedRoleFilter == "All" ? "Filter by Role" : "Role: $_selectedRoleFilter",
-                                          style: const TextStyle(fontSize: 14, color: textPrimary, fontWeight: FontWeight.w500),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                SizedBox(
-                                  width: 260,
-                                  height: 40,
-                                  child: TextField(
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _searchQuery = value;
-                                      });
-                                    },
-                                    style: const TextStyle(fontSize: 14),
-                                    decoration: InputDecoration(
-                                      hintText: "Search users...",
-                                      hintStyle: const TextStyle(fontSize: 14, color: textSecondary),
-                                      prefixIcon: const Icon(Icons.search_rounded, color: textSecondary, size: 20),
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: cardBorder)),
-                                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: cardBorder)),
-                                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                        const Text(
+                          "User Accounts",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          "Manage account access and assigned roles for each user.",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: textSecondary,
+                          ),
                         ),
                         const SizedBox(height: 18),
                         if (snapshot.connectionState == ConnectionState.waiting)

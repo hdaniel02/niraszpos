@@ -29,7 +29,7 @@ class OwnerShiftsWidget extends StatelessWidget {
               onPressed: () => Navigator.pushNamed(context, '/shifts'),
               icon: const Icon(Icons.open_in_new_rounded, size: 16),
               label: const Text("View All Records"),
-              style: TextButton.styleFrom(foregroundColor: const Color(0xFF1E3A8A)),
+              style: TextButton.styleFrom(foregroundColor: const Color(0xFF059669)),
             ),
           ],
         ),

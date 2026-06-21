@@ -17,7 +17,7 @@ class _ShiftWidgetState extends State<ShiftWidget> {
   final ShiftViewModel shiftVM = ShiftViewModel();
   final ProfileViewModel profileVM = ProfileViewModel();
   
-  static const Color primaryBlue = Color(0xFF1E3A8A);
+  static const Color primaryBlue = Color(0xFF059669); // Emerald Green system
   static const Color cardBorder = Color(0xFFE2E8F0);
   static const Color textPrimary = Color(0xFF0F172A);
   static const Color textSecondary = Color(0xFF64748B);
@@ -232,10 +232,63 @@ class _ShiftWidgetState extends State<ShiftWidget> {
     );
   }
 
+  Widget _buildDialogKeypadButton(
+    String text,
+    TextEditingController controller,
+    StateSetter setDialogState, {
+    IconData? icon,
+  }) {
+    return InkWell(
+      onTap: () {
+        setDialogState(() {
+          if (text == "del") {
+            if (controller.text.isNotEmpty) {
+              controller.text = controller.text.substring(0, controller.text.length - 1);
+            }
+          } else if (text == ".") {
+            if (!controller.text.contains(".")) {
+              controller.text += controller.text.isEmpty ? "0." : ".";
+            }
+          } else {
+            if (controller.text.contains(".")) {
+              final parts = controller.text.split(".");
+              if (parts.length > 1 && parts[1].length >= 2) return;
+            }
+            if (controller.text == "0") {
+              controller.text = text;
+            } else {
+              controller.text += text;
+            }
+          }
+        });
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 64,
+        height: 48,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Center(
+          child: icon != null
+              ? Icon(icon, color: const Color(0xFF64748B), size: 20)
+              : Text(
+                  text,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _showEndShiftDialog(String shiftId) async {
     final cashController = TextEditingController();
-    final cardController = TextEditingController();
-    final qrController = TextEditingController();
     bool isLoading = false;
     
     await showDialog(
@@ -248,58 +301,89 @@ class _ShiftWidgetState extends State<ShiftWidget> {
           child: Container(
             width: 480,
             padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.stop_circle_rounded, color: Colors.red, size: 32),
-                    SizedBox(width: 12),
-                    Text("End Shift", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: textPrimary)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Text("Enter the ending totals from your drawer and terminals.", style: TextStyle(color: textSecondary)),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: cashController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(
-                    labelText: "Ending Cash (Drawer)",
-                    hintText: "0.00",
-                    prefixIcon: const Icon(Icons.attach_money_rounded, color: Colors.green),
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.stop_circle_rounded, color: Colors.red, size: 32),
+                      SizedBox(width: 12),
+                      Text("End Shift", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: textPrimary)),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: cardController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(
-                    labelText: "Ending Card (EDC Terminal)",
-                    hintText: "0.00",
-                    prefixIcon: const Icon(Icons.credit_card_rounded, color: Colors.blue),
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  const SizedBox(height: 12),
+                  const Text("Enter the ending cash total from your drawer.", style: TextStyle(color: textSecondary)),
+                  const SizedBox(height: 24),
+                  
+                  // Cash Display styled like Start Shift
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: cardBorder),
+                    ),
+                    child: Center(
+                      child: Text(
+                        cashController.text.isEmpty ? "RM 0.00" : "RM ${cashController.text}",
+                        style: const TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                          color: primaryBlue,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: qrController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(
-                    labelText: "Ending QR (QR Terminal)",
-                    hintText: "0.00",
-                    prefixIcon: const Icon(Icons.qr_code_rounded, color: Colors.purple),
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  
+                  const SizedBox(height: 24),
+                  // Custom Numeric Keypad
+                  Center(
+                    child: SizedBox(
+                      width: 280,
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildDialogKeypadButton("1", cashController, setDialogState),
+                              _buildDialogKeypadButton("2", cashController, setDialogState),
+                              _buildDialogKeypadButton("3", cashController, setDialogState),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildDialogKeypadButton("4", cashController, setDialogState),
+                              _buildDialogKeypadButton("5", cashController, setDialogState),
+                              _buildDialogKeypadButton("6", cashController, setDialogState),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildDialogKeypadButton("7", cashController, setDialogState),
+                              _buildDialogKeypadButton("8", cashController, setDialogState),
+                              _buildDialogKeypadButton("9", cashController, setDialogState),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildDialogKeypadButton(".", cashController, setDialogState),
+                              _buildDialogKeypadButton("0", cashController, setDialogState),
+                              _buildDialogKeypadButton("del", cashController, setDialogState, icon: Icons.backspace_outlined),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
                 const SizedBox(height: 32),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -312,12 +396,10 @@ class _ShiftWidgetState extends State<ShiftWidget> {
                     ElevatedButton(
                       onPressed: isLoading ? null : () async {
                         final cashVal = double.tryParse(cashController.text.trim()) ?? 0.0;
-                        final cardVal = double.tryParse(cardController.text.trim()) ?? 0.0;
-                        final qrVal = double.tryParse(qrController.text.trim()) ?? 0.0;
 
                         setDialogState(() => isLoading = true);
                         try {
-                          await shiftVM.endShift(shiftId, cashVal, cardVal, qrVal);
+                          await shiftVM.endShift(shiftId, cashVal, 0.0, 0.0);
                           if (!mounted) return;
                           Navigator.pop(context);
                         } catch (e) {
@@ -341,8 +423,9 @@ class _ShiftWidgetState extends State<ShiftWidget> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {

@@ -25,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   bool obscurePassword = true;
   String firebaseStatus = "Initializing Firebase...";
 
-  static const Color primaryBlue = Color(0xFF1E3A8A);
+  static const Color primaryBlue = Color(0xFF059669); // Emerald Green system
   static const Color softBackground = Color(0xFFF8FAFC);
   static const Color cardBorder = Color(0xFFE2E8F0);
 // Cashier state variables
@@ -795,9 +795,9 @@ bool isClocking = false;
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF0F172A), // Slate 900
-            Color(0xFF1E3A8A), // Blue 900
-            Color(0xFF2563EB), // Blue 600
+            Color(0xFF064E3B), // Emerald 900
+            Color(0xFF047857), // Emerald 700
+            Color(0xFF059669), // Emerald 600
           ],
         ),
       ),
@@ -1349,8 +1349,8 @@ Widget _buildLoginForm() {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Color(0xFF0F172A), // Slate 900
-                    Color(0xFF1E3A8A), // Blue 900
+                    Color(0xFF064E3B), // Emerald 900
+                    Color(0xFF047857), // Emerald 700
                   ],
                 ),
               ),

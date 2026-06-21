@@ -105,8 +105,8 @@ class _AiInsightsScreenState extends State<AiInsightsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryBlue = Color(0xFF1E3A8A);
-    const Color backgroundBlue = Color(0xFFF1F5F9);
+    const Color primaryBlue = Color(0xFF059669); // Emerald Green system
+    const Color backgroundBlue = Color(0xFFF8FAFC);
 
     return Scaffold(
       backgroundColor: backgroundBlue,
@@ -146,14 +146,14 @@ class _AiInsightsScreenState extends State<AiInsightsScreen> {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
+                    colors: [Color(0xFF064E3B), Color(0xFF059669)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blue.withOpacity(0.3),
+                      color: Colors.green.withOpacity(0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -212,7 +212,7 @@ class _AiInsightsScreenState extends State<AiInsightsScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.query_stats_rounded, size: 80, color: Colors.blueGrey.withOpacity(0.2)),
+                            Icon(Icons.query_stats_rounded, size: 80, color: primaryBlue.withOpacity(0.2)),
                             const SizedBox(height: 16),
                             const Text(
                               "No insights generated yet.\nClick 'Generate Insights' to start.",
