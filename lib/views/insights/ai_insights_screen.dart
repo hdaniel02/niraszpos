@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../viewmodels/ai_insights_viewmodel.dart';
 
 class AiInsightsScreen extends StatefulWidget {
@@ -14,87 +13,23 @@ class _AiInsightsScreenState extends State<AiInsightsScreen> {
   final AiInsightsViewModel _viewModel = AiInsightsViewModel();
   String? _insights;
   bool _isLoading = false;
-  String _apiKey = "";
+
+  static const Color primary   = Color(0xFF059669);
+  static const Color bgColor   = Color(0xFFF8FAFC);
 
   @override
   void initState() {
     super.initState();
-    _loadApiKey();
+    // Auto-generate on first open
+    _generateInsights();
   }
 
-  Future<void> _loadApiKey() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _apiKey = prefs.getString('gemini_api_key') ?? "";
-    });
-  }
-
-  Future<void> _saveApiKey(String key) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('gemini_api_key', key);
-    setState(() {
-      _apiKey = key;
-    });
-  }
-
-  void _promptForApiKey() {
-    final controller = TextEditingController(text: _apiKey);
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Set Gemini API Key"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              "To use the AI Analyst, you need a free Gemini API key from Google AI Studio (aistudio.google.com).",
-              style: TextStyle(fontSize: 14),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                labelText: "API Key",
-                border: OutlineInputBorder(),
-              ),
-              obscureText: true,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final key = controller.text.trim();
-              if (key.isNotEmpty) {
-                await _saveApiKey(key);
-                if (mounted) Navigator.pop(context);
-                _generateInsights(); // Auto-start the AI analysis!
-              }
-            },
-            child: const Text("Save Key"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _generateInsights() async {
-    if (_apiKey.isEmpty) {
-      _promptForApiKey();
-      return;
-    }
-
+  Future<void> _generateInsights() async {
     setState(() {
       _isLoading = true;
       _insights = null;
     });
-
-    final result = await _viewModel.generateInsights(_apiKey);
-
+    final result = await _viewModel.generateInsights();
     if (mounted) {
       setState(() {
         _insights = result;
@@ -105,167 +40,227 @@ class _AiInsightsScreenState extends State<AiInsightsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryBlue = Color(0xFF059669); // Emerald Green system
-    const Color backgroundBlue = Color(0xFFF8FAFC);
-
     return Scaffold(
-      backgroundColor: backgroundBlue,
+      backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Row(
           children: [
-            Icon(Icons.auto_awesome, color: Colors.amber, size: 28),
-            SizedBox(width: 12),
+            Icon(Icons.auto_awesome, color: Colors.amber, size: 26),
+            SizedBox(width: 10),
             Text(
-              "AI Business Analyst",
+              'Business Insights',
               style: TextStyle(
-                color: primaryBlue,
+                color: primary,
                 fontWeight: FontWeight.w800,
-                fontSize: 22,
+                fontSize: 20,
               ),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.vpn_key, color: Colors.grey),
-            tooltip: "Set Gemini API Key",
-            onPressed: _promptForApiKey,
+            icon: const Icon(Icons.refresh_rounded, color: primary),
+            tooltip: 'Refresh Insights',
+            onPressed: _isLoading ? null : _generateInsights,
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // ── Banner ──────────────────────────────────────────────────────
               Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF064E3B), Color(0xFF059669)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.green.withOpacity(0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
+                      color: Colors.green.withOpacity(0.25),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withOpacity(0.18),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.analytics_rounded, color: Colors.white, size: 40),
+                      child: const Icon(Icons.analytics_rounded, color: Colors.white, size: 34),
                     ),
-                    const SizedBox(width: 24),
+                    const SizedBox(width: 18),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            "Smart Sales Forecasting",
-                            style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                            'Smart Sales Analytics',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 4),
                           Text(
-                            "Tap the button below to have Gemini analyze your last 30 days of sales, identify fast-moving products, and provide strategies for next month.",
-                            style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14, height: 1.5),
+                            'Insights generated by Gemini AI from your last 30 days of sales and inventory data.',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.85),
+                              fontSize: 12,
+                              height: 1.4,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 24),
+                    const SizedBox(width: 12),
                     ElevatedButton.icon(
                       onPressed: _isLoading ? null : _generateInsights,
-                      icon: _isLoading 
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: primaryBlue, strokeWidth: 2))
-                        : const Icon(Icons.auto_awesome, color: primaryBlue),
+                      icon: _isLoading
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                color: primary,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(Icons.refresh_rounded, color: primary, size: 18),
                       label: Text(
-                        _isLoading ? "Analyzing..." : "Generate Insights",
-                        style: const TextStyle(color: primaryBlue, fontWeight: FontWeight.bold),
+                        _isLoading ? 'Analyzing...' : 'Refresh',
+                        style: const TextStyle(
+                          color: primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+
+              const SizedBox(height: 20),
+
+              // ── Content ─────────────────────────────────────────────────────
               Expanded(
-                child: _insights == null && !_isLoading
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.query_stats_rounded, size: 80, color: primaryBlue.withOpacity(0.2)),
-                            const SizedBox(height: 16),
-                            const Text(
-                              "No insights generated yet.\nClick 'Generate Insights' to start.",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.blueGrey, fontSize: 16, fontWeight: FontWeight.w500),
-                            ),
-                          ],
-                        ),
-                      )
-                    : Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.grey.shade200),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.02),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
-                          child: _isLoading
-                              ? const Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      CircularProgressIndicator(),
-                                      SizedBox(height: 24),
-                                      Text(
-                                        "Gemini is analyzing your data...\nThis may take a few seconds.",
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.w600),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              : Markdown(
-                                  data: _insights!,
-                                  padding: const EdgeInsets.all(32),
-                                  styleSheet: MarkdownStyleSheet(
-                                    h1: const TextStyle(color: primaryBlue, fontWeight: FontWeight.w900, fontSize: 24),
-                                    h2: const TextStyle(color: primaryBlue, fontWeight: FontWeight.w800, fontSize: 20),
-                                    h3: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18),
-                                    p: const TextStyle(color: Color(0xFF334155), fontSize: 15, height: 1.6),
-                                    listBullet: const TextStyle(color: primaryBlue, fontSize: 16),
-                                    strong: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: _isLoading
+                        ? const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(color: primary),
+                                SizedBox(height: 20),
+                                Text(
+                                  'Calculating your insights...',
+                                  style: TextStyle(
+                                    color: Color(0xFF64748B),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 15,
                                   ),
                                 ),
-                        ),
-                      ),
+                              ],
+                            ),
+                          )
+                        : _insights == null
+                            ? const Center(
+                                child: Text(
+                                  'No data yet.',
+                                  style: TextStyle(color: Color(0xFF94A3B8)),
+                                ),
+                              )
+                            : Markdown(
+                                data: _insights!,
+                                padding: const EdgeInsets.all(28),
+                                styleSheet: MarkdownStyleSheet(
+                                  h1: const TextStyle(
+                                    color: primary,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 22,
+                                  ),
+                                  h2: const TextStyle(
+                                    color: Color(0xFF0F172A),
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 17,
+                                  ),
+                                  h3: const TextStyle(
+                                    color: Color(0xFF334155),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                  p: const TextStyle(
+                                    color: Color(0xFF475569),
+                                    fontSize: 14,
+                                    height: 1.6,
+                                  ),
+                                  tableHead: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                  tableBody: const TextStyle(
+                                    color: Color(0xFF475569),
+                                    fontSize: 13,
+                                  ),
+                                  blockquote: const TextStyle(
+                                    color: Color(0xFF64748B),
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  listBullet: const TextStyle(
+                                    color: primary,
+                                    fontSize: 14,
+                                  ),
+                                  strong: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                  horizontalRuleDecoration: BoxDecoration(
+                                    border: Border(
+                                      top: BorderSide(
+                                        color: Colors.grey.shade200,
+                                        width: 1,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                  ),
+                ),
               ),
             ],
           ),
