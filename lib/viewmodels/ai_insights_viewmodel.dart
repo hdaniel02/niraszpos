@@ -107,48 +107,56 @@ class AiInsightsViewModel {
 
     // If there are no transactions, we return immediately with a helpful placeholder
     if (totalTxns == 0) {
-      return '# 📊 Business Insights Report\n'
+      return '# 📊 Shop Sales Report\n'
           '*Generated automatically from your last 30 days of sales data*\n\n'
-          '## 🏆 Executive Summary\n\n'
-          '| Metric | Value |\n'
+          '## 🏆 Sales Summary\n\n'
+          '| Metric / Ringkasan | Value / Nilai |\n'
           '|---|---|\n'
-          '| 💰 Total Revenue (30d) | **RM 0.00** |\n'
-          '| 💪 Business Health | **🔴 Needs Attention (60/100)** |\n\n'
-          '> ⚠️ **No sales recorded in the last 30 days.** Start making sales to see insights here!';
+          '| 💰 Total Sales (30 Days) | **RM 0.00** |\n'
+          '| 💪 Shop Performance | **🔴 Needs Attention (60/100)** |\n\n'
+          '> ⚠️ **No sales recorded in the last 30 days.** Once you start making sales at the register, your AI assistant will analyze them and give you tips here!';
     }
 
     // ── 6. Try generating with Gemini 3.5 Flash ──────────────────────────────
     final prompt = '''
-You are a professional AI Business Analytics Consultant for a Malaysian POS retail store.
-Analyze the following store performance data from the last 30 days and provide deep, professional, and actionable business insights.
-All financial values are in RM (Malaysian Ringgit).
+You are a warm, encouraging, and experienced retail store consultant helper in Malaysia.
+Your job is to analyze the following sales and inventory numbers from the last 30 days and write a simple, easy-to-read shop summary report for a local store owner who is 50+ years old. 
 
---- Raw Data (30-day summary) ---
-- Total Revenue: RM ${totalRevenue.toStringAsFixed(2)}
-- This Week's Revenue: RM ${weekRevenue.toStringAsFixed(2)}
-- Total Transactions: $totalTxns
-- Average Order Value: RM ${avgOrderValue.toStringAsFixed(2)}
-- Daily Average Revenue: RM ${dailyAvgRevenue.toStringAsFixed(2)}
-- Calculated Business Health Score: $healthScore/100 ($healthLabel)
+All monetary values are in RM (Malaysian Ringgit).
 
---- Top Performing Products (Units Sold & Revenue) ---
-${sortedBySales.take(5).map((e) => '- ${e.key}: ${e.value} units sold, RM ${revenuePerProduct[e.key]?.toStringAsFixed(2) ?? '0.00'} revenue').join('\n')}
+--- Shop Data (30-day summary) ---
+- Total Sales (Hasil Jualan): RM ${totalRevenue.toStringAsFixed(2)}
+- Sales This Week: RM ${weekRevenue.toStringAsFixed(2)}
+- Total Customers Served (Transactions): $totalTxns
+- Average spent per customer (AOV): RM ${avgOrderValue.toStringAsFixed(2)}
+- Average sales per day: RM ${dailyAvgRevenue.toStringAsFixed(2)}
+- Shop Performance Score: $healthScore/100 ($healthLabel)
 
---- Urgent Inventory Restocks Needed ---
-${urgentRestocks.isEmpty ? 'All fast-moving products have sufficient stock. No urgent restocks needed.' : urgentRestocks.map((item) => '- ${item['name']}: ${item['stock']} units left (selling at ${(item['dailyRate'] as double).toStringAsFixed(1)} units/day, runs out in ${item['daysLeft']} days)').join('\n')}
+--- Best Selling Items (Top Performers) ---
+${sortedBySales.take(5).map((e) => '- ${e.key}: ${e.value} units sold, RM ${revenuePerProduct[e.key]?.toStringAsFixed(2) ?? '0.00'} total sales').join('\n')}
 
---- Slow-Moving / Dead Stock ---
-${deadStock.isEmpty ? 'No dead stock detected.' : deadStock.map((item) => '- ${item['name']}: ${item['stock']} units in stock (${item['sold'] ?? 0} sales in 30 days, RM ${((item['stock'] as int) * (item['price'] as double)).toStringAsFixed(2)} tied up)').join('\n')}
+--- Stock Running Out Soon (Urgent Restocks) ---
+${urgentRestocks.isEmpty ? 'All items have plenty of stock.' : urgentRestocks.map((item) => '- ${item['name']}: only ${item['stock']} units left! (Selling around ${(item['dailyRate'] as double).toStringAsFixed(1)} units/day, will run out in ${item['daysLeft']} days)').join('\n')}
 
---- Guidelines for your response ---
-Please generate a beautiful, professional business analysis report in Markdown.
-The report MUST contain:
-1. A summary section with a styled Markdown table of the key metrics.
-2. A performance analysis section commenting on sales trends (e.g. comparing weekly revenue to total revenue, average order value health, etc.).
-3. Inventory strategy section detailing which items need restocking and how many to order, plus tips for dead stock (like discount offers, bundling, etc.).
-4. Clear, numbered business growth suggestions/recommendations tailored specifically to the data.
+--- Slow Selling Items (Dead Stock) ---
+${deadStock.isEmpty ? 'All items are selling well.' : deadStock.map((item) => '- ${item['name']}: ${item['stock']} units sitting on shelves (${item['sold'] ?? 0} sold in 30 days, RM ${((item['stock'] as int) * (item['price'] as double)).toStringAsFixed(2)} tied up)').join('\n')}
 
-Use emojis, bold text, lists, and tables to make the report look polished and executive. Address the business owner directly. Keep your tone encouraging, strategic, and concise. Do not mention that these numbers were computed beforehand; speak as if you are analyzing the store's databases directly.
+--- Guidelines for your response (Crucial for Readability) ---
+- Tone: Extremely friendly, respectful, clear, and encouraging. Use simple English (with occasional simple Malay business terms in brackets if helpful, e.g. "Hasil Jualan" or "Stok").
+- Language: NEVER use technical startup jargon like "conversion rate", "margin optimization", "revenue growth velocity", "churn rate", "AOV", "dead stock", "data latency", etc. 
+- Instead, use simple words:
+  * "Total Sales" instead of "Revenue"
+  * "Average Spent per Customer" instead of "Average Order Value / AOV"
+  * "Shop Performance" instead of "Business Health"
+  * "Items Running Out Soon" instead of "Urgent Restocks"
+  * "Slow Selling Items" instead of "Dead Stock"
+  * "Tips to Grow Sales" instead of "Recommendations"
+- Layout: Use very clean formatting.
+  * Start with a simple 2-column table summarizing the key metrics with clear descriptions.
+  * For metrics, explain what they mean in brackets (e.g. explain that "Average spent per customer" means how much money a single customer typically spends during one visit).
+  * Use large section headers (like `## 🏆 Sales Summary`, `## 🥇 Best Selling Items`, `## ⚠️ Stock Alerts`, `## 💡 Easy Steps to Increase Sales`).
+  * Give highly practical, step-by-step, numbered tips that a 50-year-old shop owner can start doing today (e.g., "Offer item X as a buy-1-free-1 combo with item Y", "Put item Z near the counter because it runs out fast").
+  * Use emojis at the start of lists to make it visually friendly and easy to scan.
 ''';
 
     try {
@@ -214,109 +222,110 @@ Use emojis, bold text, lists, and tables to make the report look polished and ex
   }) {
     final buf = StringBuffer();
 
-    buf.writeln('# 📊 Business Insights Report *(Generated Offline)*');
-    buf.writeln('*Calculated from your last 30 days of sales data*');
+    buf.writeln('# 📊 Shop Sales Report *(Offline)*');
+    buf.writeln('*Calculated automatically from your last 30 days of sales data*');
     buf.writeln();
 
-    buf.writeln('## 🏆 Executive Summary');
+    buf.writeln('## 🏆 Sales Summary');
     buf.writeln();
-    buf.writeln('| Metric | Value |');
+    buf.writeln('| Sales Metric (Maklumat Jualan) | Value / Nilai |');
     buf.writeln('|--------|-------|');
-    buf.writeln('| 💰 Total Revenue (30d) | **RM ${totalRevenue.toStringAsFixed(2)}** |');
-    buf.writeln('| 📅 This Week Revenue   | **RM ${weekRevenue.toStringAsFixed(2)}** |');
-    buf.writeln('| 🛒 Total Transactions  | **$totalTxns** |');
-    buf.writeln('| 🧾 Avg Order Value     | **RM ${avgOrderValue.toStringAsFixed(2)}** |');
-    buf.writeln('| 📆 Daily Avg Revenue   | **RM ${dailyAvgRevenue.toStringAsFixed(2)}** |');
-    buf.writeln('| 💪 Business Health     | **$healthEmoji $healthLabel ($healthScore/100)** |');
+    buf.writeln('| 💰 Total Sales (30 Days) | **RM ${totalRevenue.toStringAsFixed(2)}** |');
+    buf.writeln('| 📅 Sales This Week | **RM ${weekRevenue.toStringAsFixed(2)}** |');
+    buf.writeln('| 🛒 Customers Served | **$totalTxns** |');
+    buf.writeln('| 🧾 Avg. Spent per Customer | **RM ${avgOrderValue.toStringAsFixed(2)}** |');
+    buf.writeln('| 📆 Average Sales per Day | **RM ${dailyAvgRevenue.toStringAsFixed(2)}** |');
+    buf.writeln('| 💪 Shop Performance | **$healthEmoji $healthLabel ($healthScore/100)** |');
     buf.writeln();
 
     if (sortedBySales.isNotEmpty) {
-      buf.writeln('## 🥇 Top Performing Products');
+      buf.writeln('## 🥇 Best Selling Items');
+      buf.writeln('These are your top 5 popular products:');
       buf.writeln();
-      buf.writeln('| Rank | Product | Units Sold | Revenue |');
+      buf.writeln('| Rank | Product Name | Units Sold | Total Sales |');
       buf.writeln('|------|---------|-----------|---------|');
       int rank = 1;
       for (final entry in sortedBySales.take(5)) {
         final rev = revenuePerProduct[entry.key]?.toStringAsFixed(2) ?? '0.00';
         final medal = rank == 1 ? '🥇' : rank == 2 ? '🥈' : rank == 3 ? '🥉' : '  ';
-        buf.writeln('| $medal $rank | ${entry.key} | ${entry.value} | RM $rev |');
+        buf.writeln('| $medal $rank | ${entry.key} | ${entry.value} units | RM $rev |');
         rank++;
       }
       buf.writeln();
     }
 
-    buf.writeln('## 🔴 Urgent Restocks');
+    buf.writeln('## ⚠️ Stock Running Out Soon');
     buf.writeln();
     if (urgentRestocks.isEmpty) {
-      buf.writeln('✅ All fast-moving products have sufficient stock. No urgent restocks needed!');
+      buf.writeln('✅ Excellent! All fast-moving products have enough stock.');
     } else {
-      buf.writeln('These items are selling fast and will run out soon — **restock immediately:**');
+      buf.writeln('These items are selling fast and will run out of stock soon — **please order more:**');
       buf.writeln();
       for (final item in urgentRestocks) {
         final days = item['daysLeft'] as int;
-        final urgency = days <= 3 ? '🚨 CRITICAL' : days <= 7 ? '⚠️ Urgent' : '⏰ Soon';
+        final urgency = days <= 3 ? '🚨 CRITICAL (Kurang 3 hari!)' : days <= 7 ? '⚠️ Urgent' : '⏰ Soon';
         buf.writeln('- **${item['name']}** — $urgency');
-        buf.writeln('  - Current stock: **${item['stock']} units**');
-        buf.writeln('  - Selling at: **${(item['dailyRate'] as double).toStringAsFixed(1)} units/day**');
-        buf.writeln('  - Estimated run-out: **$days day${days == 1 ? '' : 's'}**');
+        buf.writeln('  - Left in stock: **${item['stock']} units**');
+        buf.writeln('  - Selling speed: **${(item['dailyRate'] as double).toStringAsFixed(1)} units per day**');
+        buf.writeln('  - Will run out in: **$days day${days == 1 ? '' : 's'}**');
       }
     }
     buf.writeln();
 
-    buf.writeln('## 💀 Dead Stock Alert');
+    buf.writeln('## 🐢 Slow Selling Items');
     buf.writeln();
     if (deadStock.isEmpty) {
-      buf.writeln('✅ Great news — all products have recorded at least some sales. No dead stock detected!');
+      buf.writeln('✅ Great news — all your products are selling well!');
     } else {
-      buf.writeln('The following products have little or no sales. Consider taking action:');
+      buf.writeln('These products have very low or no sales lately. You can try discounts or combos to clear them:');
       buf.writeln();
       for (final item in deadStock) {
         final sold = item['sold'] ?? 0;
         final stockValue = ((item['stock'] as int) * (item['price'] as double)).toStringAsFixed(2);
-        buf.writeln('- **${item['name']}** — ${item['stock']} units in stock (${sold == 0 ? "0 sales" : "$sold sales"}, RM $stockValue tied up)');
+        buf.writeln('- **${item['name']}** — ${item['stock']} units sitting on shelves (${sold == 0 ? "0 sales" : "$sold sales"}, RM $stockValue tied up)');
         if (sold == 0) {
-          buf.writeln('  - 💡 *Suggestion: Try bundling with ${sortedBySales.isNotEmpty ? sortedBySales.first.key : "top sellers"}, or apply a limited-time discount.*');
+          buf.writeln('  - 💡 *Tip: Try bundling this with ${sortedBySales.isNotEmpty ? sortedBySales.first.key : "your best sellers"} as a package deal.*');
         } else {
-          buf.writeln('  - 💡 *Suggestion: Promote this item or apply a small discount to boost movement.*');
+          buf.writeln('  - 💡 *Tip: Put this near the front of the shop or offer a small discount to clear stock.*');
         }
       }
     }
     buf.writeln();
 
-    buf.writeln('## 💡 Recommendations');
+    buf.writeln('## 💡 Tips to Increase Sales');
     buf.writeln();
 
     final List<String> recs = [];
     if (avgOrderValue < 15) {
-      recs.add('📦 **Upsell & Bundle**: Your average order value is RM ${avgOrderValue.toStringAsFixed(2)}. Try creating combo deals to push it above RM 20.');
+      recs.add('📦 **Create Combo Deals**: Customers spend around RM ${avgOrderValue.toStringAsFixed(2)} per visit. Create packaged combo deals to encourage them to spend more than RM 20.');
     }
     if (weekRevenue > (totalRevenue * 0.4)) {
-      recs.add('📈 **Strong Week**: This week\'s revenue is ${((weekRevenue / totalRevenue) * 100).toStringAsFixed(0)}% of your monthly total. Keep this momentum going!');
+      recs.add('📈 **Sales Momentum**: Sales this week are very strong! Make sure your shop is fully stocked and staffed to keep up the great work.');
     }
     if (urgentRestocks.isNotEmpty) {
-      recs.add('🚚 **Prioritize Restocking**: You have ${urgentRestocks.length} item(s) at risk of running out. Place orders today to avoid lost sales.');
+      recs.add('🚚 **Restock Today**: You have ${urgentRestocks.length} popular item(s) running out. Order more today so you don\'t lose sales.');
     }
     if (deadStock.length > 2) {
-      recs.add('🏷️ **Clear Dead Stock**: ${deadStock.length} items have very low movement. Run a weekend promo or bundle them with your top sellers.');
+      recs.add('🏷️ **Run a Promo**: You have a few items sitting on shelves. Run a weekend promotion or a discount to turn them back into cash.');
     }
     if (sortedBySales.isNotEmpty) {
-      recs.add('⭐ **Double Down on Winners**: **${sortedBySales.first.key}** is your best seller with ${sortedBySales.first.value} units sold. Make sure it\'s always in stock and prominently displayed.');
+      recs.add('⭐ **Focus on Best Sellers**: **${sortedBySales.first.key}** is your absolute favorite with ${sortedBySales.first.value} items sold. Always make sure this item is prominently displayed near the entrance.');
     }
     if (totalTxns < 10) {
-      recs.add('📣 **Drive More Traffic**: Only $totalTxns transactions in 30 days. Consider running a promotion or loyalty program to bring in more customers.');
+      recs.add('📣 **Attract Customers**: You had only $totalTxns transactions this month. Consider offering a small local discount or posting on social media to invite more people in.');
     }
 
     if (recs.isEmpty) {
-      recs.add('🎉 Your business is performing well! Keep monitoring stock levels and maintain your current sales pace.');
+      recs.add('🎉 Your store is running smoothly! Keep an eye on stock levels and maintain your daily sales pace.');
     }
 
-    for (final rec in recs) {
-      buf.writeln(rec);
+    for (int i = 0; i < recs.length; i++) {
+      buf.writeln('${i + 1}. ${recs[i]}');
       buf.writeln();
     }
 
     buf.writeln('---');
-    buf.writeln('*This report is generated automatically from your sales and inventory data. Data reflects the last 30 days.*');
+    buf.writeln('*This analysis is automatically generated from your sales entries.*');
 
     return buf.toString();
   }

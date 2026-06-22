@@ -212,38 +212,43 @@ class _AiInsightsScreenState extends State<AiInsightsScreen> {
                                   h1: const TextStyle(
                                     color: primary,
                                     fontWeight: FontWeight.w900,
-                                    fontSize: 22,
+                                    fontSize: 25,
+                                    height: 1.5,
                                   ),
                                   h2: const TextStyle(
                                     color: Color(0xFF0F172A),
                                     fontWeight: FontWeight.w800,
-                                    fontSize: 17,
+                                    fontSize: 20,
+                                    height: 1.5,
                                   ),
                                   h3: const TextStyle(
                                     color: Color(0xFF334155),
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 15,
+                                    fontSize: 18,
+                                    height: 1.5,
                                   ),
                                   p: const TextStyle(
                                     color: Color(0xFF475569),
-                                    fontSize: 14,
+                                    fontSize: 16,
                                     height: 1.6,
                                   ),
                                   tableHead: const TextStyle(
                                     fontWeight: FontWeight.w700,
                                     color: Color(0xFF0F172A),
+                                    fontSize: 15,
                                   ),
                                   tableBody: const TextStyle(
                                     color: Color(0xFF475569),
-                                    fontSize: 13,
+                                    fontSize: 15,
                                   ),
                                   blockquote: const TextStyle(
                                     color: Color(0xFF64748B),
                                     fontStyle: FontStyle.italic,
+                                    fontSize: 15,
                                   ),
                                   listBullet: const TextStyle(
                                     color: primary,
-                                    fontSize: 14,
+                                    fontSize: 16,
                                   ),
                                   strong: const TextStyle(
                                     fontWeight: FontWeight.bold,
