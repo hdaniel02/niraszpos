@@ -5,8 +5,8 @@ import '../../../viewmodels/sales_viewmodel.dart';
 import '../../../models/sales.dart';
 
 class OwnerDashboardWidget extends StatefulWidget {
-  final DateTime selectedDate;
-  const OwnerDashboardWidget({super.key, required this.selectedDate});
+  final DateTimeRange selectedRange;
+  const OwnerDashboardWidget({super.key, required this.selectedRange});
 
   @override
   State<OwnerDashboardWidget> createState() => _OwnerDashboardWidgetState();
@@ -41,7 +41,7 @@ class _OwnerDashboardWidgetState extends State<OwnerDashboardWidget> {
   @override
   void didUpdateWidget(OwnerDashboardWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedDate != widget.selectedDate) {
+    if (oldWidget.selectedRange != widget.selectedRange) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           setState(() {
@@ -55,9 +55,9 @@ class _OwnerDashboardWidgetState extends State<OwnerDashboardWidget> {
 
   Future<void> _loadData() async {
     try {
-      // Fetch relative to selectedDate (8 months prior up to end of selected day)
-      final start = DateTime(widget.selectedDate.year, widget.selectedDate.month - 8, 1);
-      final end = DateTime(widget.selectedDate.year, widget.selectedDate.month, widget.selectedDate.day, 23, 59, 59);
+      // Fetch relative to selectedRange.end (8 months prior to start of range up to end of selected range)
+      final start = DateTime(widget.selectedRange.start.year, widget.selectedRange.start.month - 8, 1);
+      final end = DateTime(widget.selectedRange.end.year, widget.selectedRange.end.month, widget.selectedRange.end.day, 23, 59, 59);
       
       final results = await Future.wait([
         _salesVM.getSalesForDateRange(start, end),
@@ -95,32 +95,42 @@ class _OwnerDashboardWidgetState extends State<OwnerDashboardWidget> {
     }
   }
 
-  // --- Data Helpers relative to selectedDate ---
-  List<Sale> get _thisWeekSales {
-    final startOfSelected = DateTime(widget.selectedDate.year, widget.selectedDate.month, widget.selectedDate.day);
-    return _recentSales.where((s) => s.createdAt.isAfter(startOfSelected.subtract(const Duration(days: 7))) && s.createdAt.isBefore(startOfSelected.add(const Duration(days: 1)))).toList();
+  // --- Data Helpers relative to selectedRange ---
+  int get _rangeDurationDays {
+    final start = DateTime(widget.selectedRange.start.year, widget.selectedRange.start.month, widget.selectedRange.start.day);
+    final end = DateTime(widget.selectedRange.end.year, widget.selectedRange.end.month, widget.selectedRange.end.day);
+    return end.difference(start).inDays + 1;
   }
 
-  List<Sale> get _lastWeekSales {
-    final startOfSelected = DateTime(widget.selectedDate.year, widget.selectedDate.month, widget.selectedDate.day);
-    return _recentSales.where((s) => s.createdAt.isAfter(startOfSelected.subtract(const Duration(days: 14))) && s.createdAt.isBefore(startOfSelected.subtract(const Duration(days: 7)))).toList();
+  String _getComparisonLabel() {
+    final days = _rangeDurationDays;
+    if (days == 1) return "From yesterday";
+    if (days == 7) return "From last week";
+    if (days == 30) return "From last month";
+    return "From $days days";
+  }
+
+  List<Sale> get _selectedRangeSales {
+    final start = DateTime(widget.selectedRange.start.year, widget.selectedRange.start.month, widget.selectedRange.start.day);
+    final end = DateTime(widget.selectedRange.end.year, widget.selectedRange.end.month, widget.selectedRange.end.day, 23, 59, 59);
+    return _recentSales.where((s) => s.createdAt.isAfter(start.subtract(const Duration(milliseconds: 1))) && s.createdAt.isBefore(end.add(const Duration(milliseconds: 1)))).toList();
+  }
+
+  List<Sale> get _todaySales => _selectedRangeSales;
+
+  List<Sale> get _previousRangeSales {
+    final duration = _rangeDurationDays;
+    final startOfSelected = DateTime(widget.selectedRange.start.year, widget.selectedRange.start.month, widget.selectedRange.start.day);
+    
+    final startOfPrev = startOfSelected.subtract(Duration(days: duration));
+    final endOfPrev = startOfSelected.subtract(const Duration(milliseconds: 1));
+    
+    return _recentSales.where((s) => s.createdAt.isAfter(startOfPrev.subtract(const Duration(milliseconds: 1))) && s.createdAt.isBefore(endOfPrev.add(const Duration(milliseconds: 1)))).toList();
   }
 
   List<Sale> get _currentMonthSales {
-    final endOfSelected = DateTime(widget.selectedDate.year, widget.selectedDate.month, widget.selectedDate.day, 23, 59, 59);
-    return _recentSales.where((s) => s.createdAt.isAfter(DateTime(widget.selectedDate.year, widget.selectedDate.month, 1)) && s.createdAt.isBefore(endOfSelected)).toList();
-  }
-
-  List<Sale> get _todaySales {
-    final startOfSelected = DateTime(widget.selectedDate.year, widget.selectedDate.month, widget.selectedDate.day);
-    final endOfSelected = DateTime(widget.selectedDate.year, widget.selectedDate.month, widget.selectedDate.day, 23, 59, 59);
-    return _recentSales.where((s) => s.createdAt.isAfter(startOfSelected) && s.createdAt.isBefore(endOfSelected)).toList();
-  }
-
-  List<Sale> get _yesterdaySales {
-    final startOfYesterday = DateTime(widget.selectedDate.year, widget.selectedDate.month, widget.selectedDate.day).subtract(const Duration(days: 1));
-    final endOfYesterday = DateTime(widget.selectedDate.year, widget.selectedDate.month, widget.selectedDate.day, 23, 59, 59).subtract(const Duration(days: 1));
-    return _recentSales.where((s) => s.createdAt.isAfter(startOfYesterday) && s.createdAt.isBefore(endOfYesterday)).toList();
+    final endOfSelected = DateTime(widget.selectedRange.end.year, widget.selectedRange.end.month, widget.selectedRange.end.day, 23, 59, 59);
+    return _recentSales.where((s) => s.createdAt.isAfter(DateTime(widget.selectedRange.end.year, widget.selectedRange.end.month, 1)) && s.createdAt.isBefore(endOfSelected)).toList();
   }
 
   double _calculateGrowth(double current, double previous) {
@@ -154,35 +164,41 @@ class _OwnerDashboardWidgetState extends State<OwnerDashboardWidget> {
   }
 
   Widget _buildTopMetricsRow() {
-    // Revenue (Weekly)
-    double revThisWeek = _thisWeekSales.fold(0, (sum, s) => sum + s.total);
-    double revLastWeek = _lastWeekSales.fold(0, (sum, s) => sum + s.total);
-    double revGrowth = _calculateGrowth(revThisWeek, revLastWeek);
+    // Selected Range Sales vs Previous Period
+    final currentSales = _selectedRangeSales;
+    final prevSales = _previousRangeSales;
 
-    // Total Orders Per Day (Daily Sales Amount)
-    double todaySalesAmount = _todaySales.fold(0.0, (sum, s) => sum + s.total);
-    double yesterdaySalesAmount = _yesterdaySales.fold(0.0, (sum, s) => sum + s.total);
-    double salesGrowth = _calculateGrowth(todaySalesAmount, yesterdaySalesAmount);
+    // Revenue
+    double revCurrent = currentSales.fold(0.0, (sum, s) => sum + s.total);
+    double revPrev = prevSales.fold(0.0, (sum, s) => sum + s.total);
+    double revGrowth = _calculateGrowth(revCurrent, revPrev);
 
-    // Total Customer Per Day (Daily Customer/Order Count)
-    int todayCustomerCount = _todaySales.length;
-    int yesterdayCustomerCount = _yesterdaySales.length;
-    double customerGrowth = _calculateGrowth(todayCustomerCount.toDouble(), yesterdayCustomerCount.toDouble());
+    // Total Orders (Sales Amount)
+    double ordersCurrentAmount = currentSales.fold(0.0, (sum, s) => sum + s.total);
+    double ordersPrevAmount = prevSales.fold(0.0, (sum, s) => sum + s.total);
+    double ordersGrowth = _calculateGrowth(ordersCurrentAmount, ordersPrevAmount);
 
-    // Items Sold (Weekly)
-    int itemsThisWeek = _thisWeekSales.fold(0, (sum, s) => sum + s.items.fold(0, (isum, i) => isum + i.quantity));
-    int itemsLastWeek = _lastWeekSales.fold(0, (sum, s) => sum + s.items.fold(0, (isum, i) => isum + i.quantity));
-    double itemsGrowth = _calculateGrowth(itemsThisWeek.toDouble(), itemsLastWeek.toDouble());
+    // Total Customer (Transaction Count)
+    int customerCurrent = currentSales.length;
+    int customerPrev = prevSales.length;
+    double customerGrowth = _calculateGrowth(customerCurrent.toDouble(), customerPrev.toDouble());
+
+    // Items Sold
+    int itemsCurrent = currentSales.fold(0, (sum, s) => sum + s.items.fold(0, (isum, i) => isum + i.quantity));
+    int itemsPrev = prevSales.fold(0, (sum, s) => sum + s.items.fold(0, (isum, i) => isum + i.quantity));
+    double itemsGrowth = _calculateGrowth(itemsCurrent.toDouble(), itemsPrev.toDouble());
+
+    final compLabel = _getComparisonLabel();
 
     return Row(
       children: [
-        Expanded(child: _buildMetricCard("Total Revenue", "RM ${revThisWeek.toStringAsFixed(2)}", revGrowth >= 0, "${revGrowth.abs().toStringAsFixed(1)}%", "From last week")),
+        Expanded(child: _buildMetricCard("Total Revenue", "RM ${revCurrent.toStringAsFixed(2)}", revGrowth >= 0, "${revGrowth.abs().toStringAsFixed(1)}%", compLabel)),
         const SizedBox(width: 20),
-        Expanded(child: _buildMetricCard("Total Orders", "RM ${todaySalesAmount.toStringAsFixed(2)}", salesGrowth >= 0, "${salesGrowth.abs().toStringAsFixed(1)}%", "From yesterday")),
+        Expanded(child: _buildMetricCard("Total Orders", "RM ${ordersCurrentAmount.toStringAsFixed(2)}", ordersGrowth >= 0, "${ordersGrowth.abs().toStringAsFixed(1)}%", compLabel)),
         const SizedBox(width: 20),
-        Expanded(child: _buildMetricCard("Total Customer", todayCustomerCount.toString(), customerGrowth >= 0, "${customerGrowth.abs().toStringAsFixed(1)}%", "From yesterday")),
+        Expanded(child: _buildMetricCard("Total Customer", customerCurrent.toString(), customerGrowth >= 0, "${customerGrowth.abs().toStringAsFixed(1)}%", compLabel)),
         const SizedBox(width: 20),
-        Expanded(child: _buildMetricCard("Items Sold", itemsThisWeek.toString(), itemsGrowth >= 0, "${itemsGrowth.abs().toStringAsFixed(1)}%", "From last week")),
+        Expanded(child: _buildMetricCard("Items Sold", itemsCurrent.toString(), itemsGrowth >= 0, "${itemsGrowth.abs().toStringAsFixed(1)}%", compLabel)),
       ],
     );
   }
@@ -244,7 +260,7 @@ class _OwnerDashboardWidgetState extends State<OwnerDashboardWidget> {
   Widget _buildMonthlySalesChart() {
     // Group sales by month
     Map<int, double> monthlySales = {};
-    final refDate = widget.selectedDate;
+    final refDate = widget.selectedRange.end;
     for (int i = 8; i >= 0; i--) {
       // Initialize last 9 months to 0
       int m = refDate.month - i;

@@ -19,6 +19,7 @@ import '../insights/ai_insights_screen.dart';
 import '../../viewmodels/profile_viewmodel.dart';
 import '../../models/product.dart';
 import '../../viewmodels/product_viewmodel.dart';
+import '../../viewmodels/sales_viewmodel.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AppShell — persistent sidebar layout wrapping a nested light canvas card
@@ -50,16 +51,31 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
   static const double _expandedWidth = 240;
   static const double _collapsedWidth = 68;
 
-  // ── Owner Notification Listener State ─────────────────────────────────────
+  static const Color primaryBlue = Color(0xFF059669);
+  final SalesViewModel salesVM = SalesViewModel();
+
   StreamSubscription<List<Product>>? _productsSubscription;
+  StreamSubscription<List<Map<String, dynamic>>>? _refundSubscription;
+  StreamSubscription<QuerySnapshot>? _passcodeSubscription;
+
+  List<Product> _lowStockProducts = [];
+  List<Map<String, dynamic>> _pendingRefundRequests = [];
+  List<QueryDocumentSnapshot> _pendingPasscodeRequests = [];
+
+  int _lastLowStockCount = 0;
+  int _lastRefundCount = 0;
+  int _lastPasscodeCount = 0;
+
   final Set<String> _notifiedSoldOutProductIds = {};
   bool _isInitialLoad = true;
+  bool _hasNotification = false;
+  int _reloadCounter = 0;
 
   @override
   void initState() {
     super.initState();
     _loadUserName();
-    _setupOwnerNotificationListener();
+    _subscribeToNotifications();
   }
 
   Future<void> _loadUserName() async {
@@ -71,13 +87,14 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
     }
   }
 
-  void _setupOwnerNotificationListener() {
-    debugPrint("AppShell: setupOwnerNotificationListener: role = ${widget.role}");
-    if (widget.role.toLowerCase() != 'owner') return;
-
+  void _subscribeToNotifications() {
+    debugPrint("AppShell: subscribeToNotifications: role = ${widget.role}");
+    
+    // 1. Products stream for low stock & sold out alerts
     _productsSubscription = ProductViewModel().getProducts().listen((products) {
       if (!mounted) return;
 
+      final lowStockItems = products.where((p) => p.stock <= 5).toList();
       final currentSoldOutIds = <String>{};
 
       for (final product in products) {
@@ -95,8 +112,258 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
       _notifiedSoldOutProductIds.clear();
       _notifiedSoldOutProductIds.addAll(currentSoldOutIds);
       _isInitialLoad = false;
+
+      setState(() {
+        _lowStockProducts = lowStockItems;
+        if (lowStockItems.length > _lastLowStockCount) {
+          _hasNotification = true;
+        }
+        _lastLowStockCount = lowStockItems.length;
+      });
+    });
+
+    // 2. Passcode requests stream
+    final r = widget.role.toLowerCase();
+    _passcodeSubscription = FirebaseFirestore.instance
+        .collection('passcode_requests')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .listen((snapshot) {
+      if (!mounted) return;
+      final allRequests = snapshot.docs;
+      List<QueryDocumentSnapshot> visibleRequests = [];
+      if (r == 'manager' || r == 'owner') {
+        visibleRequests = allRequests.where((doc) {
+          final data = doc.data();
+          final status = data['status'];
+          return status == 'pending_manager' || status == 'completed';
+        }).toList();
+      } else if (r == 'admin' || r == 'superadmin') {
+        visibleRequests = allRequests.where((doc) {
+          final data = doc.data();
+          final status = data['status'];
+          return status == 'pending_admin';
+        }).toList();
+      }
+      setState(() {
+        _pendingPasscodeRequests = visibleRequests;
+        if (visibleRequests.length > _lastPasscodeCount) {
+          _hasNotification = true;
+        }
+        _lastPasscodeCount = visibleRequests.length;
+      });
+    });
+
+    // 3. Pending refunds stream
+    _refundSubscription = salesVM.getPendingRefundRequests().listen((requests) {
+      if (!mounted) return;
+      setState(() {
+        _pendingRefundRequests = requests;
+        if (requests.length > _lastRefundCount) {
+          _hasNotification = true;
+        }
+        _lastRefundCount = requests.length;
+      });
     });
   }
+
+  void _showNotificationDialog() {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "Notifications",
+      barrierColor: Colors.black.withOpacity(0.20),
+      transitionDuration: const Duration(milliseconds: 260),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return NotificationPanel(
+          animation: animation,
+          pendingRefundRequests: _pendingRefundRequests,
+          pendingPasscodeRequests: _pendingPasscodeRequests,
+          lowStockProducts: _lowStockProducts,
+          salesVM: salesVM,
+          onAdminReset: (docId, cashierUid, setDialogState) =>
+              _showAdminResetDialog(docId, cashierUid, setDialogState),
+          onViewDismiss: (docId, passcode, setDialogState) =>
+              _showViewAndDismissDialog(docId, passcode, setDialogState),
+          onNavigateToProducts: (productName) {
+            Navigator.pop(dialogContext);
+            ProductsScreen.initialSearchQuery = productName;
+            navigateToTab('Products');
+          },
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.88, end: 1.0).animate(curved),
+            alignment: Alignment.topRight,
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showAdminResetDialog(String requestId, String cashierUid, StateSetter setDialogState) async {
+    final TextEditingController newPasscodeController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          child: Container(
+            width: 400,
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.password_rounded, size: 48, color: primaryBlue),
+                const SizedBox(height: 24),
+                const Text("Set New Passcode", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 12),
+                const Text("Enter a new 6-digit passcode for this cashier. This will be sent back to the manager.", textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF64748B))),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: newPasscodeController,
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  decoration: InputDecoration(
+                    hintText: "6-digit passcode",
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: const Text("Cancel"),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final newPasscode = newPasscodeController.text.trim();
+                          if (newPasscode.length != 6) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Passcode must be 6 digits")));
+                            return;
+                          }
+
+                          try {
+                            await FirebaseFirestore.instance.collection('users').doc(cashierUid).update({
+                              'passcode': newPasscode,
+                            });
+
+                            await FirebaseFirestore.instance.collection('passcode_requests').doc(requestId).update({
+                              'status': 'completed',
+                              'newPasscode': newPasscode,
+                            });
+
+                            if (!dialogContext.mounted) return;
+                            Navigator.pop(dialogContext);
+                            setDialogState(() {});
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Passcode updated and sent back to Manager")));
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, foregroundColor: Colors.white),
+                        child: const Text("Confirm"),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showViewAndDismissDialog(String requestId, String newPasscode, StateSetter setDialogState) async {
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          child: Container(
+            width: 400,
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle_rounded, size: 48, color: Color(0xFF059669)),
+                const SizedBox(height: 24),
+                const Text("Passcode Ready", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 12),
+                const Text("The Admin has successfully generated a new passcode. Please manually communicate this to the cashier:", textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF64748B))),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Text(
+                    newPasscode,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 36, letterSpacing: 8, fontWeight: FontWeight.w800, color: primaryBlue),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      try {
+                        await FirebaseFirestore.instance.collection('passcode_requests').doc(requestId).delete();
+                        if (!dialogContext.mounted) return;
+                        Navigator.pop(dialogContext);
+                        setDialogState(() {});
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryBlue,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text("Dismiss Notification", style: TextStyle(fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _handleRefresh() {
+    setState(() {
+      _reloadCounter++;
+    });
+  }
+
+
 
   void _triggerPushNotification(String title, String message) {
     // 1. Show local native OS notification on macOS
@@ -171,6 +438,8 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
   @override
   void dispose() {
     _productsSubscription?.cancel();
+    _refundSubscription?.cancel();
+    _passcodeSubscription?.cancel();
     super.dispose();
   }
 
@@ -189,7 +458,6 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
       case 'admin':
       case 'superadmin':
         return [
-          dashboard,
           _NavTab(
             label: 'Manage Users',
             icon: Icons.people_rounded,
@@ -296,19 +564,9 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
             iconOutline: Icons.point_of_sale_outlined,
           ),
           _NavTab(
-            label: 'Closing Reports',
-            icon: Icons.receipt_long_rounded,
-            iconOutline: Icons.receipt_long_outlined,
-          ),
-          _NavTab(
             label: 'Sales History',
             icon: Icons.history_rounded,
             iconOutline: Icons.history_outlined,
-          ),
-          _NavTab(
-            label: 'Refunds',
-            icon: Icons.assignment_return_rounded,
-            iconOutline: Icons.assignment_return_outlined,
           ),
           _NavTab(
             label: 'Profile',
@@ -331,29 +589,134 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
 
   // ── Build the page for each tab ───────────────────────────────────────────
   Widget _pageForTab(_NavTab tab) {
+    final pageKey = ValueKey('${tab.label}_$_reloadCounter');
     switch (tab.label) {
       case 'Dashboard':
-        return DashboardScreen(role: widget.role);
+        return DashboardScreen(
+          key: pageKey, 
+          role: widget.role,
+          hasNotification: _hasNotification,
+          onNotificationTapped: () {
+            setState(() {
+              _hasNotification = false;
+            });
+            _showNotificationDialog();
+          },
+          onRefreshTapped: _handleRefresh,
+        );
       case 'POS':
-        return const PosScreen();
+        return PosScreen(
+          key: pageKey,
+          hasNotification: _hasNotification,
+          onNotificationTapped: () {
+            setState(() {
+              _hasNotification = false;
+            });
+            _showNotificationDialog();
+          },
+          onRefreshTapped: _handleRefresh,
+        );
       case 'Products':
-        return ProductsScreen();
+        return ProductsScreen(
+          key: pageKey,
+          hasNotification: _hasNotification,
+          onNotificationTapped: () {
+            setState(() {
+              _hasNotification = false;
+            });
+            _showNotificationDialog();
+          },
+          onRefreshTapped: _handleRefresh,
+        );
       case 'Closing Reports':
-        return ClosingReportsScreen(role: widget.role);
+        return ClosingReportsScreen(
+          key: pageKey, 
+          role: widget.role,
+          hasNotification: _hasNotification,
+          onNotificationTapped: () {
+            setState(() {
+              _hasNotification = false;
+            });
+            _showNotificationDialog();
+          },
+          onRefreshTapped: _handleRefresh,
+        );
       case 'Sales History':
-        return SalesHistoryScreen(role: widget.role);
+        return SalesHistoryScreen(
+          key: pageKey, 
+          role: widget.role,
+          hasNotification: _hasNotification,
+          onNotificationTapped: () {
+            setState(() {
+              _hasNotification = false;
+            });
+            _showNotificationDialog();
+          },
+          onRefreshTapped: _handleRefresh,
+        );
       case 'Refunds':
-        return RefundsScreen(role: widget.role);
+        return RefundsScreen(
+          key: pageKey, 
+          role: widget.role,
+          hasNotification: _hasNotification,
+          onNotificationTapped: () {
+            setState(() {
+              _hasNotification = false;
+            });
+            _showNotificationDialog();
+          },
+          onRefreshTapped: _handleRefresh,
+        );
       case 'Manage Users':
-        return ManageUsersScreen();
+        return ManageUsersScreen(
+          key: pageKey,
+          hasNotification: _hasNotification,
+          onNotificationTapped: () {
+            setState(() {
+              _hasNotification = false;
+            });
+            _showNotificationDialog();
+          },
+          onRefreshTapped: _handleRefresh,
+        );
       case 'Cashier Performance':
-        return const ShiftsScreen();
+        return ShiftsScreen(
+          key: pageKey,
+          hasNotification: _hasNotification,
+          onNotificationTapped: () {
+            setState(() {
+              _hasNotification = false;
+            });
+            _showNotificationDialog();
+          },
+          onRefreshTapped: _handleRefresh,
+        );
       case 'AI Analyst':
-        return const AiInsightsScreen();
+        return AiInsightsScreen(
+          key: pageKey,
+          hasNotification: _hasNotification,
+          onNotificationTapped: () {
+            setState(() {
+              _hasNotification = false;
+            });
+            _showNotificationDialog();
+          },
+          onRefreshTapped: _handleRefresh,
+        );
       case 'Profile':
-        return const ProfileScreen();
+        return ProfileScreen(
+          key: pageKey,
+          hasNotification: _hasNotification,
+          onNotificationTapped: () {
+            setState(() {
+              _hasNotification = false;
+            });
+            _showNotificationDialog();
+          },
+          onRefreshTapped: _handleRefresh,
+        );
       default:
-        return const Center(child: Text('Page not found'));
+        return Center(key: pageKey, child: const Text('Page not found'));
     }
   }
 
@@ -673,9 +1036,13 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
               child: SafeArea(
                 bottom: false,
                 left: false,
-                child: IndexedStack(
-                  index: safeIndex,
-                  children: tabs.map((tab) => _pageForTab(tab)).toList(),
+                child: Stack(
+                  children: [
+                    IndexedStack(
+                      index: safeIndex,
+                      children: tabs.map((tab) => _pageForTab(tab)).toList(),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -796,8 +1163,16 @@ class AppShellState extends State<AppShell> with SingleTickerProviderStateMixin 
                 ),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
-                Icons.person_rounded,
+              child: Icon(
+                widget.role.toLowerCase() == 'admin' || widget.role.toLowerCase() == 'superadmin' 
+                    ? Icons.admin_panel_settings_rounded 
+                    : widget.role.toLowerCase() == 'manager' 
+                        ? Icons.manage_accounts_rounded 
+                        : widget.role.toLowerCase() == 'owner' 
+                            ? Icons.storefront_rounded 
+                            : widget.role.toLowerCase() == 'cashier' 
+                                ? Icons.point_of_sale_rounded 
+                                : Icons.person_rounded,
                 color: Colors.white,
                 size: 18,
               ),

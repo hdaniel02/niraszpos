@@ -327,14 +327,22 @@ class SalesViewModel {
 
       final newTotalRefundedAmount = currentSale.refundedAmount + refundAmount;
 
+      // Phase 1: Reads
+      final Map<String, DocumentSnapshot<Map<String, dynamic>>> productSnapshots = {};
       for (final refundItem in refundItems) {
         if (refundItem.quantity <= 0) continue;
         final productRef = _productsCollection.doc(refundItem.productId);
-        final productSnapshot = await transaction.get(productRef);
-        if (productSnapshot.exists) {
+        productSnapshots[refundItem.productId] = await transaction.get(productRef);
+      }
+
+      // Phase 2: Writes
+      for (final refundItem in refundItems) {
+        if (refundItem.quantity <= 0) continue;
+        final productSnapshot = productSnapshots[refundItem.productId];
+        if (productSnapshot != null && productSnapshot.exists) {
           final productData = productSnapshot.data()!;
           final currentStock = (productData['stock'] ?? 0) as int;
-          transaction.update(productRef, {
+          transaction.update(productSnapshot.reference, {
             'stock': currentStock + refundItem.quantity,
           });
         }

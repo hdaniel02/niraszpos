@@ -4,7 +4,16 @@ import '../../models/user.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 
 class ManageUsersScreen extends StatefulWidget {
-  const ManageUsersScreen({super.key});
+  final VoidCallback? onNotificationTapped;
+  final bool hasNotification;
+  final VoidCallback? onRefreshTapped;
+
+  const ManageUsersScreen({
+    super.key,
+    this.onNotificationTapped,
+    this.hasNotification = false,
+    this.onRefreshTapped,
+  });
 
   @override
   State<ManageUsersScreen> createState() => _ManageUsersScreenState();
@@ -540,16 +549,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: softBackground,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          _showUserDialog(context);
-        },
-        backgroundColor: primaryBlue,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        icon: const Icon(Icons.person_add_alt_1_rounded),
-        label: const Text("Create User"),
-      ),
+
       body: SafeArea(
         child: StreamBuilder<List<AppUser>>(
           stream: authVM.getUsers(),
@@ -603,85 +603,54 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                         ),
                       ),
                       const SizedBox(width: 16),
+                      const SizedBox(width: 16),
                       Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          PopupMenuButton<String>(
-                            color: Colors.white,
-                            surfaceTintColor: Colors.white,
-                            elevation: 8,
-                            position: PopupMenuPosition.under,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side: const BorderSide(color: cardBorder, width: 1),
+                          Container(
+                            height: 40,
+                            width: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                            onSelected: (value) {
-                              setState(() {
-                                _selectedRoleFilter = value;
-                              });
-                            },
-                            itemBuilder: (context) => [
-                              "All",
-                              "Admin",
-                              "Manager",
-                              "Cashier",
-                              "Owner"
-                            ].map((role) => PopupMenuItem(
-                              value: role,
-                              child: Text(
-                                role == "All" ? "All Roles" : role,
-                                style: TextStyle(
-                                  color: _selectedRoleFilter == role ? primaryBlue : textPrimary,
-                                  fontWeight: _selectedRoleFilter == role ? FontWeight.w700 : FontWeight.w500,
-                                  fontSize: 14,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: IconButton(
+                                onPressed: widget.onNotificationTapped,
+                                tooltip: "Notifications",
+                                icon: Icon(
+                                  widget.hasNotification
+                                      ? Icons.notifications_active_rounded
+                                      : Icons.notifications_none_rounded,
+                                  size: 20,
                                 ),
-                              ),
-                            )).toList(),
-                            child: Container(
-                              height: 38,
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: cardBorder),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.filter_list_rounded, size: 20, color: textSecondary),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _selectedRoleFilter == "All" ? "Filter by Role" : "Role: $_selectedRoleFilter",
-                                    style: const TextStyle(fontSize: 13, color: textPrimary, fontWeight: FontWeight.w500),
-                                  ),
-                                ],
+                                color: const Color(0xFF64748B),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                splashRadius: 20,
                               ),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Container(
-                            width: 240,
-                            height: 38,
+                            height: 40,
+                            width: 40,
                             decoration: BoxDecoration(
                               color: Colors.white,
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: cardBorder),
                             ),
-                            child: TextField(
-                              textAlignVertical: TextAlignVertical.center,
-                              onChanged: (value) {
-                                setState(() {
-                                  _searchQuery = value;
-                                });
-                              },
-                              style: const TextStyle(fontSize: 13),
-                              decoration: InputDecoration(
-                                hintText: "Search users...",
-                                hintStyle: const TextStyle(fontSize: 13, color: textSecondary),
-                                prefixIcon: const Icon(Icons.search_rounded, color: textSecondary, size: 18),
-                                prefixIconConstraints: const BoxConstraints(minWidth: 36, minHeight: 38),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: EdgeInsets.zero,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: IconButton(
+                                onPressed: widget.onRefreshTapped,
+                                tooltip: "Refresh",
+                                icon: const Icon(Icons.refresh_rounded, size: 20),
+                                color: const Color(0xFF64748B),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                splashRadius: 20,
                               ),
                             ),
                           ),
@@ -696,22 +665,110 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-
-                        const Text(
-                          "User Accounts",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          "Manage account access and assigned roles for each user.",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: textSecondary,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            PopupMenuButton<String>(
+                              color: Colors.white,
+                              surfaceTintColor: Colors.white,
+                              elevation: 8,
+                              position: PopupMenuPosition.under,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                side: const BorderSide(color: cardBorder, width: 1),
+                              ),
+                              onSelected: (value) {
+                                setState(() {
+                                  _selectedRoleFilter = value;
+                                });
+                              },
+                              itemBuilder: (context) => [
+                                "All",
+                                "Admin",
+                                "Manager",
+                                "Cashier",
+                                "Owner"
+                              ].map((role) => PopupMenuItem(
+                                value: role,
+                                child: Text(
+                                  role == "All" ? "All Roles" : role,
+                                  style: TextStyle(
+                                    color: _selectedRoleFilter == role ? primaryBlue : textPrimary,
+                                    fontWeight: _selectedRoleFilter == role ? FontWeight.w700 : FontWeight.w500,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              )).toList(),
+                              child: Container(
+                                height: 38,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: cardBorder),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.filter_list_rounded, size: 20, color: textSecondary),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      _selectedRoleFilter == "All" ? "Filter by Role" : "Role: $_selectedRoleFilter",
+                                      style: const TextStyle(fontSize: 13, color: textPrimary, fontWeight: FontWeight.w500),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 240,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: cardBorder),
+                                  ),
+                                  child: TextField(
+                                    textAlignVertical: TextAlignVertical.center,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _searchQuery = value;
+                                      });
+                                    },
+                                    style: const TextStyle(fontSize: 13),
+                                    decoration: InputDecoration(
+                                      hintText: "Search users...",
+                                      hintStyle: const TextStyle(fontSize: 13, color: textSecondary),
+                                      prefixIcon: const Icon(Icons.search_rounded, color: textSecondary, size: 18),
+                                      prefixIconConstraints: const BoxConstraints(minWidth: 36, minHeight: 38),
+                                      border: InputBorder.none,
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    _showUserDialog(context);
+                                  },
+                                  icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                                  label: const Text("Create User", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primaryBlue,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    fixedSize: const Size.fromHeight(38),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 18),
                         if (snapshot.connectionState == ConnectionState.waiting)

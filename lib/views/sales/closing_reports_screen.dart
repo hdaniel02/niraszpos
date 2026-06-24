@@ -9,7 +9,17 @@ import '../../viewmodels/product_viewmodel.dart';
 
 class ClosingReportsScreen extends StatefulWidget {
   final String role;
-  const ClosingReportsScreen({super.key, required this.role});
+  final VoidCallback? onNotificationTapped;
+  final bool hasNotification;
+  final VoidCallback? onRefreshTapped;
+
+  const ClosingReportsScreen({
+    super.key, 
+    required this.role,
+    this.onNotificationTapped,
+    this.hasNotification = false,
+    this.onRefreshTapped,
+  });
 
   @override
   State<ClosingReportsScreen> createState() => _ClosingReportsScreenState();
@@ -600,50 +610,52 @@ class _ClosingReportsScreenState extends State<ClosingReportsScreen> {
                           ),
                           const SizedBox(width: 16),
                           Row(
-                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Container(
-                                width: 240,
-                                height: 38,
+                                height: 40,
+                                width: 40,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
                                   borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: cardBorder),
                                 ),
-                                child: TextField(
-                                  textAlignVertical: TextAlignVertical.center,
-                                  onChanged: (val) => setState(() => _searchQuery = val),
-                                  decoration: const InputDecoration(
-                                    hintText: "Search cashier, date...",
-                                    hintStyle: TextStyle(fontSize: 13, color: textSecondary),
-                                    prefixIcon: Icon(Icons.search, size: 18, color: textSecondary),
-                                    prefixIconConstraints: BoxConstraints(minWidth: 36, minHeight: 38),
-                                    border: InputBorder.none,
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.zero,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: IconButton(
+                                    onPressed: widget.onNotificationTapped,
+                                    tooltip: "Notifications",
+                                    icon: Icon(
+                                      widget.hasNotification
+                                          ? Icons.notifications_active_rounded
+                                          : Icons.notifications_none_rounded,
+                                      size: 20,
+                                    ),
+                                    color: const Color(0xFF64748B),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    splashRadius: 20,
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Container(
-                                height: 38,
-                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                height: 40,
+                                width: 40,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
                                   borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: cardBorder),
                                 ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: _sortOption,
-                                    icon: const Icon(Icons.keyboard_arrow_down, size: 16),
-                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: textPrimary),
-                                    items: ['Date: Newest', 'Date: Oldest'].map((e) {
-                                      return DropdownMenuItem(value: e, child: Text(e));
-                                    }).toList(),
-                                    onChanged: (val) {
-                                      if (val != null) setState(() => _sortOption = val);
-                                    },
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: IconButton(
+                                    onPressed: widget.onRefreshTapped,
+                                    tooltip: "Refresh",
+                                    icon: const Icon(Icons.refresh_rounded, size: 20),
+                                    color: const Color(0xFF64748B),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    splashRadius: 20,
                                   ),
                                 ),
                               ),
@@ -657,16 +669,114 @@ class _ClosingReportsScreenState extends State<ClosingReportsScreen> {
                     Expanded(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(24),
-                        child: Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: cardBorder),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // Left side: Date Filter & Advanced Filter Button
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      height: 38,
+                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: cardBorder),
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<String>(
+                                          value: _sortOption,
+                                          dropdownColor: Colors.white,
+                                          borderRadius: BorderRadius.circular(16),
+                                          icon: const Icon(Icons.keyboard_arrow_down, size: 16),
+                                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: textPrimary),
+                                          items: ['Date: Newest', 'Date: Oldest'].map((e) {
+                                            return DropdownMenuItem(value: e, child: Text(e));
+                                          }).toList(),
+                                          onChanged: (val) {
+                                            if (val != null) setState(() => _sortOption = val);
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    SizedBox(
+                                      height: 38,
+                                      child: OutlinedButton.icon(
+                                        onPressed: () {}, // TODO: Implement advanced filter
+                                        icon: const Icon(Icons.tune_rounded, size: 16, color: textSecondary),
+                                        label: const Text('Filter', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textSecondary)),
+                                        style: OutlinedButton.styleFrom(
+                                          backgroundColor: Colors.white,
+                                          side: const BorderSide(color: cardBorder),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                // Right side: Search & Export
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 240,
+                                      height: 38,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: cardBorder),
+                                      ),
+                                      child: TextField(
+                                        textAlignVertical: TextAlignVertical.center,
+                                        onChanged: (val) => setState(() => _searchQuery = val),
+                                        decoration: const InputDecoration(
+                                          hintText: "Search cashier, date...",
+                                          hintStyle: TextStyle(fontSize: 13, color: textSecondary),
+                                          prefixIcon: Icon(Icons.search, size: 18, color: textSecondary),
+                                          prefixIconConstraints: BoxConstraints(minWidth: 36, minHeight: 38),
+                                          border: InputBorder.none,
+                                          isDense: true,
+                                          contentPadding: EdgeInsets.zero,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    SizedBox(
+                                      height: 38,
+                                      child: ElevatedButton.icon(
+                                        onPressed: () {}, // TODO: Implement export to PDF
+                                        icon: const Icon(Icons.picture_as_pdf_rounded, size: 16),
+                                        label: const Text('Export', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF0F172A),
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: cardBorder),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
 
 
                               if (shifts.isEmpty)
@@ -798,13 +908,15 @@ class _ClosingReportsScreenState extends State<ClosingReportsScreen> {
                                     );
                                   },
                                 ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
-                  ],
-                );
+                  ),
+                ],
+              );
               },
             );
           },

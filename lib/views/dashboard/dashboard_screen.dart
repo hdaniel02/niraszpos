@@ -17,7 +17,17 @@ import '../product/products_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String role;
-  const DashboardScreen({super.key, required this.role});
+  final VoidCallback? onNotificationTapped;
+  final bool hasNotification;
+  final VoidCallback? onRefreshTapped;
+
+  const DashboardScreen({
+    super.key, 
+    required this.role,
+    this.onNotificationTapped,
+    this.hasNotification = false,
+    this.onRefreshTapped,
+  });
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -39,7 +49,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double todaySales = 0;
   int todayTransactions = 0;
   String userName = "";
-  DateTime? _selectedDate;
+  DateTimeRange? _selectedDateRange;
   bool isLoading = true;
   bool _hasNotification = false;
   StreamSubscription<List<Product>>? _productsSubscription;
@@ -62,15 +72,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return '$day $month $year';
   }
 
+  String formatDisplayRange(DateTimeRange range) {
+    if (range.start.year == range.end.year &&
+        range.start.month == range.end.month &&
+        range.start.day == range.end.day) {
+      return formatDisplayDate(range.start);
+    }
+    const months = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    final startDay = range.start.day.toString();
+    final startMonth = months[range.start.month];
+    final endDay = range.end.day.toString();
+    final endMonth = months[range.end.month];
+    
+    if (range.start.year == range.end.year) {
+      return '$startDay $startMonth - $endDay $endMonth ${range.start.year}';
+    } else {
+      return '$startDay $startMonth ${range.start.year.toString().substring(2)} - $endDay $endMonth ${range.end.year.toString().substring(2)}';
+    }
+  }
+
   Future<void> _selectDate() async {
-    final DateTime? picked = await showGeneralDialog<DateTime>(
+    final DateTimeRange? picked = await showGeneralDialog<DateTimeRange>(
       context: context,
       barrierDismissible: true,
       barrierLabel: "DatePicker",
       barrierColor: Colors.black.withOpacity(0.30),
       transitionDuration: const Duration(milliseconds: 240),
       pageBuilder: (ctx, anim, _) => _CustomCalendarDialog(
-        initialDate: _selectedDate ?? DateTime.now(),
+        initialRange: _selectedDateRange ?? DateTimeRange(
+          start: DateTime.now(),
+          end: DateTime.now(),
+        ),
       ),
       transitionBuilder: (ctx, anim, _, child) {
         final curved = CurvedAnimation(
@@ -88,9 +120,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
       },
     );
-    if (picked != null && picked != _selectedDate) {
+    if (picked != null && picked != _selectedDateRange) {
       setState(() {
-        _selectedDate = picked;
+        _selectedDateRange = picked;
       });
       loadDashboardData();
     }
@@ -145,7 +177,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       barrierColor: Colors.black.withOpacity(0.20),
       transitionDuration: const Duration(milliseconds: 260),
       pageBuilder: (dialogContext, animation, secondaryAnimation) {
-        return _NotificationPanel(
+        return NotificationPanel(
           animation: animation,
           pendingRefundRequests: _pendingRefundRequests,
           pendingPasscodeRequests: _pendingPasscodeRequests,
@@ -333,6 +365,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    final today = DateTime.now();
+    _selectedDateRange = DateTimeRange(
+      start: DateTime(today.year, today.month, today.day),
+      end: DateTime(today.year, today.month, today.day),
+    );
     loadDashboardData();
     _subscribeToProducts();
   }
@@ -408,10 +445,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     try {
       final products = await productVM.getProductsOnce();
-      final targetDate = _selectedDate ?? DateTime.now();
-      final startOfDay = DateTime(targetDate.year, targetDate.month, targetDate.day);
-      final endOfDay = DateTime(targetDate.year, targetDate.month, targetDate.day, 23, 59, 59);
-      final sales = await salesVM.getSalesForDateRange(startOfDay, endOfDay);
+      final range = _selectedDateRange ?? DateTimeRange(
+        start: DateTime.now(),
+        end: DateTime.now(),
+      );
+      final start = DateTime(range.start.year, range.start.month, range.start.day);
+      final end = DateTime(range.end.year, range.end.month, range.end.day, 23, 59, 59);
+      final sales = await salesVM.getSalesForDateRange(start, end);
       final profile = await profileVM.getCurrentUserProfile();
 
       if (!mounted) return;
@@ -464,6 +504,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   List<Map<String, dynamic>> getSummaryCards() {
+    final isSingleDay = _selectedDateRange == null ||
+        (_selectedDateRange!.start.year == _selectedDateRange!.end.year &&
+            _selectedDateRange!.start.month == _selectedDateRange!.end.month &&
+            _selectedDateRange!.start.day == _selectedDateRange!.end.day);
+
     switch (role.toLowerCase()) {
       case "admin":
       case "superadmin":
@@ -484,7 +529,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case "owner":
         return [
           {
-            "title": "Today Sales",
+            "title": isSingleDay ? "Today Sales" : "Period Sales",
             "value": "RM ${todaySales.toStringAsFixed(2)}",
             "icon": Icons.attach_money_rounded,
           },
@@ -503,12 +548,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case "cashier":
         return [
           {
-            "title": "Today Transactions",
+            "title": isSingleDay ? "Today Transactions" : "Period Transactions",
             "value": todayTransactions.toString(),
             "icon": Icons.receipt_long_rounded,
           },
           {
-            "title": "Today Sales",
+            "title": isSingleDay ? "Today Sales" : "Period Sales",
             "value": "RM ${todaySales.toStringAsFixed(2)}",
             "icon": Icons.point_of_sale_rounded,
           },
@@ -1429,99 +1474,93 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const Icon(Icons.calendar_today_rounded, size: 16, color: textSecondary),
                           const SizedBox(width: 8),
                           Text(
-                            formatDisplayDate(_selectedDate ?? DateTime.now()),
+                            formatDisplayRange(_selectedDateRange ?? DateTimeRange(
+                              start: DateTime.now(),
+                              end: DateTime.now(),
+                            )),
                             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: textPrimary),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Container(
-                    height: 40,
-                    width: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: cardBorder),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                              setState(() {
-                                _hasNotification = false;
-                              });
-                              _showNotificationDialog();
-                            },
+                  const SizedBox(width: 16),
+                  Row(
+                    children: [
+                      Container(
+                        height: 40,
+                        width: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: IconButton(
+                            onPressed: widget.onNotificationTapped,
                             tooltip: "Notifications",
                             icon: Icon(
-                              _hasNotification
+                              widget.hasNotification
                                   ? Icons.notifications_active_rounded
                                   : Icons.notifications_none_rounded,
                               size: 20,
                             ),
-                            color: textSecondary,
+                            color: const Color(0xFF64748B),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
                             splashRadius: 20,
                           ),
-                          if (_hasNotification)
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEF4444),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 1.5),
-                                ),
-                              ),
-                            ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    height: 40,
-                    width: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: cardBorder),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: IconButton(
-                        onPressed: loadDashboardData,
-                        tooltip: "Refresh",
-                        icon: const Icon(Icons.refresh_rounded, size: 20),
-                        color: textSecondary,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        splashRadius: 20,
+                      const SizedBox(width: 12),
+                      Container(
+                        height: 40,
+                        width: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: IconButton(
+                            onPressed: () {
+                              if (widget.onRefreshTapped != null) {
+                                widget.onRefreshTapped!();
+                              } else {
+                                loadDashboardData();
+                              }
+                            },
+                            tooltip: "Refresh",
+                            icon: const Icon(Icons.refresh_rounded, size: 20),
+                            color: const Color(0xFF64748B),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            splashRadius: 20,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
             ),
             Expanded(
               child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                   ? const Center(child: CircularProgressIndicator())
                   : SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           PasscodeRequestsWidget(role: role),
                           if (role.toLowerCase() == 'owner' || role.toLowerCase() == 'manager') ...[
-                            OwnerDashboardWidget(selectedDate: _selectedDate ?? DateTime.now()),
+                            OwnerDashboardWidget(
+                              selectedRange: _selectedDateRange ?? DateTimeRange(
+                                start: DateTime.now(),
+                                end: DateTime.now(),
+                              ),
+                            ),
                           ] else
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -1585,7 +1624,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
 // ─── Beautiful animated notification panel ──────────────────────────────────
 
-class _NotificationPanel extends StatefulWidget {
+class NotificationPanel extends StatefulWidget {
   final Animation<double> animation;
   final List<Map<String, dynamic>> pendingRefundRequests;
   final List<QueryDocumentSnapshot> pendingPasscodeRequests;
@@ -1595,7 +1634,7 @@ class _NotificationPanel extends StatefulWidget {
   final Future<void> Function(String docId, String passcode, StateSetter setState) onViewDismiss;
   final void Function(String productName) onNavigateToProducts;
 
-  const _NotificationPanel({
+  const NotificationPanel({
     required this.animation,
     required this.pendingRefundRequests,
     required this.pendingPasscodeRequests,
@@ -1607,10 +1646,10 @@ class _NotificationPanel extends StatefulWidget {
   });
 
   @override
-  State<_NotificationPanel> createState() => _NotificationPanelState();
+  State<NotificationPanel> createState() => _NotificationPanelState();
 }
 
-class _NotificationPanelState extends State<_NotificationPanel> {
+class _NotificationPanelState extends State<NotificationPanel> {
   static const Color _primary = Color(0xFF059669);
   static const Color _textPrimary = Color(0xFF0F172A);
   static const Color _textSecondary = Color(0xFF64748B);
@@ -2153,8 +2192,8 @@ class _NotificationTile extends StatelessWidget {
 // ─── Custom Calendar Dialog ──────────────────────────────────────────────────
 
 class _CustomCalendarDialog extends StatefulWidget {
-  final DateTime initialDate;
-  const _CustomCalendarDialog({required this.initialDate});
+  final DateTimeRange initialRange;
+  const _CustomCalendarDialog({required this.initialRange});
 
   @override
   State<_CustomCalendarDialog> createState() => _CustomCalendarDialogState();
@@ -2167,7 +2206,8 @@ class _CustomCalendarDialogState extends State<_CustomCalendarDialog> {
   static const _textSecondary = Color(0xFF64748B);
 
   late DateTime _viewing;   // month being shown
-  late DateTime _selected;  // currently picked day
+  DateTime? _startDate;     // start of picked range
+  DateTime? _endDate;       // end of picked range
 
   static const _monthNames = [
     '', 'January', 'February', 'March', 'April', 'May', 'June',
@@ -2177,8 +2217,9 @@ class _CustomCalendarDialogState extends State<_CustomCalendarDialog> {
   @override
   void initState() {
     super.initState();
-    _selected = widget.initialDate;
-    _viewing = DateTime(widget.initialDate.year, widget.initialDate.month, 1);
+    _startDate = widget.initialRange.start;
+    _endDate = widget.initialRange.end;
+    _viewing = DateTime(_startDate!.year, _startDate!.month, 1);
   }
 
   void _prevMonth() => setState(
@@ -2218,6 +2259,22 @@ class _CustomCalendarDialogState extends State<_CustomCalendarDialog> {
 
   bool _isToday(DateTime d) => _isSameDay(d, DateTime.now());
 
+  void _onDayTapped(DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    setState(() {
+      if (_startDate == null || (_startDate != null && _endDate != null)) {
+        _startDate = normalized;
+        _endDate = null;
+      } else {
+        if (normalized.isBefore(_startDate!)) {
+          _startDate = normalized;
+        } else {
+          _endDate = normalized;
+        }
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final cells = _buildCells();
@@ -2230,126 +2287,143 @@ class _CustomCalendarDialogState extends State<_CustomCalendarDialog> {
           color: Colors.transparent,
           child: Container(
             width: 360,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.14),
-                blurRadius: 40,
-                offset: const Offset(0, 16),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // ── Month/Year header ──────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-                child: Row(
-                  children: [
-                    // Left arrow
-                    _navBtn(Icons.chevron_left_rounded, _prevMonth),
-                    const Spacer(),
-                    // Month + Year
-                    Text(
-                      '${_monthNames[_viewing.month]} ${_viewing.year}',
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: _textDark,
-                      ),
-                    ),
-                    const Spacer(),
-                    // Right arrow
-                    _navBtn(Icons.chevron_right_rounded, _nextMonth),
-                  ],
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.14),
+                  blurRadius: 40,
+                  offset: const Offset(0, 16),
                 ),
-              ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ── Month/Year header ──────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+                  child: Row(
+                    children: [
+                      // Left arrow
+                      _navBtn(Icons.chevron_left_rounded, _prevMonth),
+                      const Spacer(),
+                      // Month + Year
+                      Text(
+                        '${_monthNames[_viewing.month]} ${_viewing.year}',
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: _textDark,
+                        ),
+                      ),
+                      const Spacer(),
+                      // Right arrow
+                      _navBtn(Icons.chevron_right_rounded, _nextMonth),
+                    ],
+                  ),
+                ),
 
-              // ── Day-of-week labels ─────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-                      .map(
-                        (d) => Expanded(
-                          child: Center(
-                            child: Text(
-                              d,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: _primary,
+                // ── Day-of-week labels ─────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+                        .map(
+                          (d) => Expanded(
+                            child: Center(
+                              child: Text(
+                                d,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: _primary,
+                                ),
                               ),
                             ),
                           ),
+                        )
+                        .toList(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // ── Calendar grid ──────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: cells.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 7,
+                      mainAxisExtent: 44,
+                    ),
+                    itemBuilder: (_, i) {
+                      final cellDate = cells[i];
+                      final isSelected = (_startDate != null && _isSameDay(cellDate, _startDate!)) ||
+                                         (_endDate != null && _isSameDay(cellDate, _endDate!));
+                      final isInRange = _startDate != null &&
+                                        _endDate != null &&
+                                        cellDate.isAfter(_startDate!) &&
+                                        cellDate.isBefore(_endDate!) &&
+                                        !_isSameDay(cellDate, _startDate!) &&
+                                        !_isSameDay(cellDate, _endDate!);
+                      return _DayCell(
+                        date: cellDate,
+                        isCurrentMonth: _isCurrentMonth(cellDate),
+                        isSelected: isSelected,
+                        isInRange: isInRange,
+                        isToday: _isToday(cellDate),
+                        onTap: () => _onDayTapped(cellDate),
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // ── Apply button ───────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (_startDate != null) {
+                          Navigator.of(context).pop(DateTimeRange(
+                            start: _startDate!,
+                            end: _endDate ?? _startDate!,
+                          ));
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primary, // system emerald green
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: const StadiumBorder(),
+                      ),
+                      child: const Text(
+                        'Apply',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.3,
                         ),
-                      )
-                      .toList(),
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // ── Calendar grid ──────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: cells.length,
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 7,
-                    mainAxisExtent: 44,
-                  ),
-                  itemBuilder: (_, i) => _DayCell(
-                    date: cells[i],
-                    isCurrentMonth: _isCurrentMonth(cells[i]),
-                    isSelected: _isSameDay(cells[i], _selected),
-                    isToday: _isToday(cells[i]),
-                    onTap: () => setState(() => _selected = cells[i]),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // ── Apply button ───────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(_selected),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _primary, // system emerald green
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: const Text(
-                      'Apply',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.3,
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _navBtn(IconData icon, VoidCallback onTap) {
     return GestureDetector(
@@ -2358,10 +2432,10 @@ class _CustomCalendarDialogState extends State<_CustomCalendarDialog> {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: const Color(0xFFECFDF5), // light emerald tint
+          color: const Color(0xFFF1F5F9), // light grey tint
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, size: 20, color: _primary),
+        child: Icon(icon, size: 20, color: _textSecondary),
       ),
     );
   }
@@ -2373,6 +2447,7 @@ class _DayCell extends StatelessWidget {
   final DateTime date;
   final bool isCurrentMonth;
   final bool isSelected;
+  final bool isInRange;
   final bool isToday;
   final VoidCallback onTap;
 
@@ -2380,6 +2455,7 @@ class _DayCell extends StatelessWidget {
     required this.date,
     required this.isCurrentMonth,
     required this.isSelected,
+    required this.isInRange,
     required this.isToday,
     required this.onTap,
   });
@@ -2388,30 +2464,43 @@ class _DayCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Color? bgColor;
+    Color textColor;
+
+    if (isSelected) {
+      bgColor = _primary;
+      textColor = Colors.white;
+    } else if (isInRange) {
+      bgColor = const Color(0xFFECFDF5); // light emerald tint
+      textColor = _primary;
+    } else {
+      bgColor = Colors.transparent;
+      textColor = isToday
+          ? _primary
+          : isCurrentMonth
+              ? const Color(0xFF0F172A)
+              : const Color(0xFFCBD5E1);
+    }
+
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         margin: const EdgeInsets.all(3),
         decoration: BoxDecoration(
-          color: isSelected ? _primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          color: bgColor,
+          borderRadius: BorderRadius.circular(isSelected || isInRange ? 22 : 10),
         ),
         child: Center(
           child: Text(
             '${date.day}',
             style: TextStyle(
               fontSize: 14,
-              fontWeight: isSelected || isToday
+              fontWeight: isSelected || isInRange || isToday
                   ? FontWeight.w700
                   : FontWeight.w500,
-              color: isSelected
-                  ? Colors.white
-                  : isToday
-                      ? _primary
-                      : isCurrentMonth
-                          ? const Color(0xFF0F172A)
-                          : const Color(0xFFCBD5E1),
+              color: textColor,
             ),
           ),
         ),

@@ -6,7 +6,17 @@ import '../../viewmodels/sales_viewmodel.dart';
 
 class RefundsScreen extends StatefulWidget {
   final String role;
-  const RefundsScreen({super.key, required this.role});
+  final VoidCallback? onNotificationTapped;
+  final bool hasNotification;
+  final VoidCallback? onRefreshTapped;
+
+  const RefundsScreen({
+    super.key, 
+    required this.role,
+    this.onNotificationTapped,
+    this.hasNotification = false,
+    this.onRefreshTapped,
+  });
 
   @override
   State<RefundsScreen> createState() => _RefundsScreenState();
@@ -206,30 +216,60 @@ class _RefundsScreenState extends State<RefundsScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Container(
-                            width: 320,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: cardBorder),
-                            ),
-                            child: TextField(
-                              textAlignVertical: TextAlignVertical.center,
-                              onChanged: (val) => setState(() => _searchQuery = val),
-                              decoration: const InputDecoration(
-                                hintText: "Search receipt, customer, bank...",
-                                hintStyle: TextStyle(fontSize: 13, color: textSecondary),
-                                prefixIcon: Icon(Icons.search, size: 18, color: textSecondary),
-                                prefixIconConstraints: BoxConstraints(minWidth: 36, minHeight: 38),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                            ),
-                          ),
-                        ],
+                           const SizedBox(width: 16),
+                           Row(
+                             children: [
+                               Container(
+                                 height: 40,
+                                 width: 40,
+                                 decoration: BoxDecoration(
+                                   color: Colors.white,
+                                   border: Border.all(color: const Color(0xFFE2E8F0)),
+                                   borderRadius: BorderRadius.circular(20),
+                                 ),
+                                 child: Material(
+                                   color: Colors.transparent,
+                                   child: IconButton(
+                                     onPressed: widget.onNotificationTapped,
+                                     tooltip: "Notifications",
+                                     icon: Icon(
+                                       widget.hasNotification
+                                           ? Icons.notifications_active_rounded
+                                           : Icons.notifications_none_rounded,
+                                       size: 20,
+                                     ),
+                                     color: const Color(0xFF64748B),
+                                     padding: EdgeInsets.zero,
+                                     constraints: const BoxConstraints(),
+                                     splashRadius: 20,
+                                   ),
+                                 ),
+                               ),
+                               const SizedBox(width: 12),
+                               Container(
+                                 height: 40,
+                                 width: 40,
+                                 decoration: BoxDecoration(
+                                   color: Colors.white,
+                                   border: Border.all(color: const Color(0xFFE2E8F0)),
+                                   borderRadius: BorderRadius.circular(20),
+                                 ),
+                                 child: Material(
+                                   color: Colors.transparent,
+                                   child: IconButton(
+                                     onPressed: widget.onRefreshTapped,
+                                     tooltip: "Refresh",
+                                     icon: const Icon(Icons.refresh_rounded, size: 20),
+                                     color: const Color(0xFF64748B),
+                                     padding: EdgeInsets.zero,
+                                     constraints: const BoxConstraints(),
+                                     splashRadius: 20,
+                                   ),
+                                 ),
+                               ),
+                             ],
+                           ),
+                         ],
                       ),
                     ),
 
@@ -240,54 +280,68 @@ class _RefundsScreenState extends State<RefundsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Stats Section
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            int crossAxisCount = 1;
-                            if (constraints.maxWidth > 950) {
-                              crossAxisCount = 3;
-                            } else if (constraints.maxWidth > 600) {
-                              crossAxisCount = 2;
-                            }
-
-                            return GridView(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: crossAxisCount,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 16,
-                                childAspectRatio: 3.2,
-                              ),
-                              children: [
-                                _statCard(
-                                  icon: Icons.hourglass_top_rounded,
-                                  title: "PENDING APPROVALS",
-                                  value: pendingCount.toString(),
-                                  color: Colors.orange.shade800,
-                                  bg: Colors.orange.shade50,
-                                ),
-                                _statCard(
-                                  icon: Icons.check_circle_rounded,
-                                  title: "APPROVED REFUNDS",
-                                  value: approvedCount.toString(),
-                                  color: Colors.green.shade700,
-                                  bg: Colors.green.shade50,
-                                ),
-                                _statCard(
-                                  icon: Icons.monetization_on_rounded,
-                                  title: "TOTAL REFUNDED AMOUNT",
-                                  value: "RM ${totalRefunded.toStringAsFixed(2)}",
-                                  color: primaryBlue,
-                                  bg: const Color(0xFFEFF6FF),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 24),
 
                         // Search and Filter Hub
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: ['All', 'Pending Approval', 'Approved', 'Rejected'].map((status) {
+                                    final isSelected = _selectedStatus == status;
+                                    return Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: ChoiceChip(
+                                        label: Text(status),
+                                        selected: isSelected,
+                                        onSelected: (val) {
+                                          if (val) {
+                                            setState(() => _selectedStatus = status);
+                                          }
+                                        },
+                                        selectedColor: primaryBlue,
+                                        backgroundColor: const Color(0xFFF1F5F9),
+                                        labelStyle: TextStyle(
+                                          color: isSelected ? Colors.white : textSecondary,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                        side: const BorderSide(color: Colors.transparent),
+                                        showCheckmark: false,
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Container(
+                              width: 240,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: cardBorder),
+                              ),
+                              child: TextField(
+                                textAlignVertical: TextAlignVertical.center,
+                                onChanged: (val) => setState(() => _searchQuery = val),
+                                decoration: const InputDecoration(
+                                  hintText: "Search receipt, customer...",
+                                  hintStyle: TextStyle(fontSize: 13, color: textSecondary),
+                                  prefixIcon: Icon(Icons.search, size: 18, color: textSecondary),
+                                  prefixIconConstraints: BoxConstraints(minWidth: 36, minHeight: 38),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
@@ -298,38 +352,6 @@ class _RefundsScreenState extends State<RefundsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Filter tabs
-                              Row(
-                                children: ['All', 'Pending Approval', 'Approved', 'Rejected'].map((status) {
-                                  final isSelected = _selectedStatus == status;
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 8),
-                                    child: ChoiceChip(
-                                      label: Text(status),
-                                      selected: isSelected,
-                                      onSelected: (val) {
-                                        if (val) {
-                                          setState(() => _selectedStatus = status);
-                                        }
-                                      },
-                                      selectedColor: primaryBlue,
-                                      backgroundColor: const Color(0xFFF1F5F9),
-                                      labelStyle: TextStyle(
-                                        color: isSelected ? Colors.white : textSecondary,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                      side: const BorderSide(color: Colors.transparent),
-                                      showCheckmark: false,
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                              const SizedBox(height: 16),
-
-
-
                               if (filteredRequests.isEmpty)
                                 const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 60),

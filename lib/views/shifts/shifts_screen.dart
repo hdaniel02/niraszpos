@@ -7,7 +7,16 @@ import '../../viewmodels/shift_viewmodel.dart';
 
 
 class ShiftsScreen extends StatefulWidget {
-  const ShiftsScreen({super.key});
+  final VoidCallback? onNotificationTapped;
+  final bool hasNotification;
+  final VoidCallback? onRefreshTapped;
+
+  const ShiftsScreen({
+    super.key,
+    this.onNotificationTapped,
+    this.hasNotification = false,
+    this.onRefreshTapped,
+  });
 
   @override
   State<ShiftsScreen> createState() => _ShiftsScreenState();
@@ -483,19 +492,153 @@ class _ShiftsScreenState extends State<ShiftsScreen> {
                         Text("Track cashier performance sales", style: TextStyle(fontSize: 13, color: textSecondary)),
                       ],
                     ),
-                    OutlinedButton.icon(
-                      onPressed: shifts.isEmpty ? null : () => _generatePdf(shifts),
-                      icon: const Icon(Icons.picture_as_pdf_rounded, size: 16, color: textSecondary),
-                      label: const Text("Export PDF"),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: textPrimary,
-                        side: const BorderSide(color: cardBorder),
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                        textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                      ),
+                    const SizedBox(width: 16),
+                    Row(
+                      children: [
+                        Container(
+                          height: 40,
+                          width: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: IconButton(
+                              onPressed: widget.onNotificationTapped,
+                              tooltip: "Notifications",
+                              icon: Icon(
+                                widget.hasNotification
+                                    ? Icons.notifications_active_rounded
+                                    : Icons.notifications_none_rounded,
+                                size: 20,
+                              ),
+                              color: const Color(0xFF64748B),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              splashRadius: 20,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          height: 40,
+                          width: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: IconButton(
+                              onPressed: widget.onRefreshTapped,
+                              tooltip: "Refresh",
+                              icon: const Icon(Icons.refresh_rounded, size: 20),
+                              color: const Color(0xFF64748B),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              splashRadius: 20,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Left side: Date Filter & Advanced Filter Button
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          height: 38,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: cardBorder),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _sortOption,
+                              dropdownColor: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              icon: const Icon(Icons.keyboard_arrow_down, size: 16),
+                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: textPrimary),
+                              items: ['Date: Newest', 'Date: Oldest', 'Name A-Z'].map((e) {
+                                return DropdownMenuItem(value: e, child: Text(e));
+                              }).toList(),
+                              onChanged: (val) {
+                                if (val != null) setState(() => _sortOption = val);
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        SizedBox(
+                          height: 38,
+                          child: OutlinedButton.icon(
+                            onPressed: () {}, // TODO: Implement advanced filter
+                            icon: const Icon(Icons.tune_rounded, size: 16, color: textSecondary),
+                            label: const Text('Filter', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textSecondary)),
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              side: const BorderSide(color: cardBorder),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Right side: Search & Export
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 260,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: cardBorder),
+                          ),
+                          child: TextField(
+                            textAlignVertical: TextAlignVertical.center,
+                            onChanged: (val) => setState(() => _searchQuery = val),
+                            decoration: const InputDecoration(
+                              hintText: "Search cashier...",
+                              hintStyle: TextStyle(fontSize: 13, color: textSecondary),
+                              prefixIcon: Icon(Icons.search, size: 18, color: textSecondary),
+                              prefixIconConstraints: BoxConstraints(minWidth: 36, minHeight: 38),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        SizedBox(
+                          height: 38,
+                          child: ElevatedButton.icon(
+                            onPressed: shifts.isEmpty ? null : () => _generatePdf(shifts),
+                            icon: const Icon(Icons.picture_as_pdf_rounded, size: 16),
+                            label: const Text('Export', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0F172A),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -510,49 +653,6 @@ class _ShiftsScreenState extends State<ShiftsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 36,
-                              decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(20)),
-                              child: TextField(
-                                textAlignVertical: TextAlignVertical.center,
-                                onChanged: (val) => setState(() => _searchQuery = val),
-                                decoration: const InputDecoration(
-                                  hintText: "Search cashier...",
-                                  hintStyle: TextStyle(fontSize: 13, color: textSecondary),
-                                  prefixIcon: Icon(Icons.search, size: 18, color: textSecondary),
-                                  prefixIconConstraints: BoxConstraints(minWidth: 40, minHeight: 36),
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            height: 36,
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(20)),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: _sortOption,
-                                icon: const Icon(Icons.keyboard_arrow_down, size: 16),
-                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: textPrimary),
-                                items: ['Date: Newest', 'Date: Oldest', 'Name A-Z'].map((e) {
-                                  return DropdownMenuItem(value: e, child: Text(e));
-                                }).toList(),
-                                onChanged: (val) {
-                                  if (val != null) setState(() => _sortOption = val);
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
                       if (shifts.isEmpty)
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 40),
@@ -576,12 +676,11 @@ class _ShiftsScreenState extends State<ShiftsScreen> {
                                       child: Row(
                                         children: const [
                                           Expanded(flex: 1, child: Text('#', style: headerStyle)),
-                                          Expanded(flex: 3, child: Text('STAFF', style: headerStyle)),
-                                          Expanded(flex: 2, child: Text('ROLE', style: headerStyle)),
-                                          Expanded(flex: 2, child: Text('STATUS', style: headerStyle)),
-                                          Expanded(flex: 3, child: Text('CLOCK IN', style: headerStyle)),
-                                          Expanded(flex: 3, child: Text('CLOCK OUT', style: headerStyle)),
-                                          Expanded(flex: 2, child: Text('SALES', style: headerStyle)),
+                                          Expanded(flex: 4, child: Text('STAFF', style: headerStyle)),
+                                          Expanded(flex: 3, child: Text('CLOCK IN', style: headerStyle, textAlign: TextAlign.center)),
+                                          Expanded(flex: 3, child: Text('CLOCK OUT', style: headerStyle, textAlign: TextAlign.center)),
+                                          Expanded(flex: 3, child: Text('SALES', style: headerStyle, textAlign: TextAlign.center)),
+                                          Expanded(flex: 2, child: Text('STATUS', style: headerStyle, textAlign: TextAlign.center)),
                                           Expanded(flex: 2, child: Text('ACTION', style: headerStyle, textAlign: TextAlign.center)),
                                         ],
                                       ),
@@ -630,35 +729,49 @@ class _ShiftsScreenState extends State<ShiftsScreen> {
                                             ),
                                             // Staff Name
                                             Expanded(
-                                              flex: 3,
+                                              flex: 4,
                                               child: Text(
                                                 displayName,
                                                 style: const TextStyle(fontWeight: FontWeight.w600, color: textPrimary, fontSize: 14),
                                               ),
                                             ),
-                                            // Role
+                                            // Clock In
                                             Expanded(
-                                              flex: 2,
-                                              child: Align(
-                                                alignment: Alignment.centerLeft,
-                                                child: Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                  decoration: BoxDecoration(
-                                                    color: const Color(0xFFF1F5F9),
-                                                    borderRadius: BorderRadius.circular(4),
-                                                  ),
-                                                  child: Text(
-                                                    shift.userRole.toUpperCase(),
-                                                    style: const TextStyle(color: textSecondary, fontWeight: FontWeight.bold, fontSize: 10),
-                                                  ),
+                                              flex: 3,
+                                              child: Text(
+                                                formatDateTime(shift.startTime),
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(fontWeight: FontWeight.w600, color: textSecondary, fontSize: 13),
+                                              ),
+                                            ),
+                                            // Clock Out
+                                            Expanded(
+                                              flex: 3,
+                                              child: Text(
+                                                shift.endTime != null ? formatDateTime(shift.endTime!) : 'Ongoing...',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: shift.endTime != null ? textSecondary : const Color(0xFF22C55E),
+                                                  fontStyle: shift.endTime != null ? FontStyle.normal : FontStyle.italic,
+                                                  fontSize: 13,
                                                 ),
+                                              ),
+                                            ),
+                                            // Sales
+                                            Expanded(
+                                              flex: 3,
+                                              child: Text(
+                                                "RM ${totalSales.toStringAsFixed(2)}",
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF22C55E), fontSize: 14),
                                               ),
                                             ),
                                             // Status
                                             Expanded(
                                               flex: 2,
                                               child: Align(
-                                                alignment: Alignment.centerLeft,
+                                                alignment: Alignment.center,
                                                 child: Container(
                                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                                   decoration: BoxDecoration(
@@ -674,35 +787,6 @@ class _ShiftsScreenState extends State<ShiftsScreen> {
                                                     ),
                                                   ),
                                                 ),
-                                              ),
-                                            ),
-                                            // Clock In
-                                            Expanded(
-                                              flex: 3,
-                                              child: Text(
-                                                formatDateTime(shift.startTime),
-                                                style: const TextStyle(fontWeight: FontWeight.w600, color: textSecondary, fontSize: 13),
-                                              ),
-                                            ),
-                                            // Clock Out
-                                            Expanded(
-                                              flex: 3,
-                                              child: Text(
-                                                shift.endTime != null ? formatDateTime(shift.endTime!) : 'Ongoing...',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                  color: shift.endTime != null ? textSecondary : const Color(0xFF22C55E),
-                                                  fontStyle: shift.endTime != null ? FontStyle.normal : FontStyle.italic,
-                                                  fontSize: 13,
-                                                ),
-                                              ),
-                                            ),
-                                            // Sales
-                                            Expanded(
-                                              flex: 2,
-                                              child: Text(
-                                                "RM ${totalSales.toStringAsFixed(2)}",
-                                                style: const TextStyle(fontWeight: FontWeight.bold, color: textPrimary, fontSize: 14),
                                               ),
                                             ),
                                             // Action

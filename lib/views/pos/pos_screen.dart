@@ -2,13 +2,23 @@ import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../models/product.dart';
 import '../../models/sales.dart';
 import '../../viewmodels/product_viewmodel.dart';
 import '../../viewmodels/sales_viewmodel.dart';
 
 class PosScreen extends StatefulWidget {
-  const PosScreen({super.key});
+  final VoidCallback? onNotificationTapped;
+  final bool hasNotification;
+  final VoidCallback? onRefreshTapped;
+
+  const PosScreen({
+    super.key,
+    this.onNotificationTapped,
+    this.hasNotification = false,
+    this.onRefreshTapped,
+  });
 
   @override
   State<PosScreen> createState() => _PosScreenState();
@@ -1177,6 +1187,8 @@ class _PosScreenState extends State<PosScreen> {
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(context, false),
                         style: OutlinedButton.styleFrom(
+                          foregroundColor: textSecondary,
+                          side: const BorderSide(color: cardBorder),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -1570,29 +1582,74 @@ class _PosScreenState extends State<PosScreen> {
                   flex: 3,
                   child: Column(
                     children: [
-                      // Header Row containing Welcome details and Date
+                      // Header Row containing NiraszPos Text and Actions
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
                         color: Colors.transparent,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Row(
                           children: [
-                            Text(
-                              _getFormattedDate(),
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "Welcome, ${_getUserWelcomeName()}!",
-                              style: const TextStyle(
-                                fontSize: 22,
+                            const Text(
+                              "NiraszPos",
+                              style: TextStyle(
+                                fontSize: 28,
                                 fontWeight: FontWeight.w800,
                                 color: textPrimary,
+                              ),
+                            ),
+                            const Spacer(),
+                            Container(
+                              height: 40,
+                              width: 40,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: IconButton(
+                                  onPressed: widget.onNotificationTapped,
+                                  tooltip: "Notifications",
+                                  icon: Icon(
+                                    widget.hasNotification
+                                        ? Icons.notifications_active_rounded
+                                        : Icons.notifications_none_rounded,
+                                    size: 20,
+                                  ),
+                                  color: const Color(0xFF64748B),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  splashRadius: 20,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              height: 40,
+                              width: 40,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: IconButton(
+                                  onPressed: () {
+                                    if (widget.onRefreshTapped != null) {
+                                      widget.onRefreshTapped!();
+                                    } else {
+                                      productVM.getProducts();
+                                    }
+                                  },
+                                  tooltip: "Refresh",
+                                  icon: const Icon(Icons.refresh_rounded, size: 20),
+                                  color: const Color(0xFF64748B),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  splashRadius: 20,
+                                ),
                               ),
                             ),
                           ],
@@ -1604,70 +1661,84 @@ class _PosScreenState extends State<PosScreen> {
                           padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
                           child: Column(
                             children: [
-                              // Full width search bar
-                              TextField(
-                                controller: searchController,
-                                focusNode: _searchFocusNode,
-                                onChanged: (value) {
-                                  setState(() {
-                                    searchText = value;
-                                  });
-                                },
-                                decoration: InputDecoration(
-                                  hintText: "Search products...",
-                                  prefixIcon: const Icon(Icons.search_rounded),
-                                  filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(18),
-                                    borderSide: const BorderSide(color: cardBorder),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(18),
-                                    borderSide: const BorderSide(color: cardBorder),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(18),
-                                    borderSide: const BorderSide(
-                                      color: primaryBlue,
-                                      width: 1.5,
+                              // Search and Categories Row
+                              Row(
+                                children: [
+                                  Expanded(
+                                    flex: 4,
+                                    child: SizedBox(
+                                      height: 44,
+                                      child: ListView.builder(
+                                        scrollDirection: Axis.horizontal,
+                                        itemCount: categories.length,
+                                        itemBuilder: (context, index) {
+                                          final cat = categories[index];
+                                          final isSelected = cat == selectedCategory;
+                                          return Padding(
+                                            padding: const EdgeInsets.only(right: 10),
+                                            child: ChoiceChip(
+                                              label: Text(cat),
+                                              selected: isSelected,
+                                              onSelected: (selected) {
+                                                if (selected) {
+                                                  setState(() {
+                                                    selectedCategory = cat;
+                                                  });
+                                                }
+                                              },
+                                              selectedColor: primaryBlue,
+                                              labelStyle: TextStyle(
+                                                color: isSelected ? Colors.white : textSecondary,
+                                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                              ),
+                                              backgroundColor: Colors.white,
+                                              side: BorderSide(color: isSelected ? primaryBlue : cardBorder),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                            ),
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              SizedBox(
-                                height: 40,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: categories.length,
-                                  itemBuilder: (context, index) {
-                                    final cat = categories[index];
-                                    final isSelected = cat == selectedCategory;
-                                    return Padding(
-                                      padding: const EdgeInsets.only(right: 10),
-                                      child: ChoiceChip(
-                                        label: Text(cat),
-                                        selected: isSelected,
-                                        onSelected: (selected) {
-                                          if (selected) {
-                                            setState(() {
-                                              selectedCategory = cat;
-                                            });
-                                          }
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    flex: 3,
+                                    child: SizedBox(
+                                      height: 44,
+                                      child: TextField(
+                                        controller: searchController,
+                                        focusNode: _searchFocusNode,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            searchText = value;
+                                          });
                                         },
-                                        selectedColor: primaryBlue,
-                                        labelStyle: TextStyle(
-                                          color: isSelected ? Colors.white : textSecondary,
-                                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                        decoration: InputDecoration(
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                                          hintText: "Search products...",
+                                          prefixIcon: const Icon(Icons.search_rounded),
+                                          filled: true,
+                                          fillColor: const Color(0xFFF8FAFC),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(18),
+                                            borderSide: const BorderSide(color: cardBorder),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(18),
+                                            borderSide: const BorderSide(color: cardBorder),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(18),
+                                            borderSide: const BorderSide(
+                                              color: primaryBlue,
+                                              width: 1.5,
+                                            ),
+                                          ),
                                         ),
-                                        backgroundColor: Colors.white,
-                                        side: BorderSide(color: isSelected ? primaryBlue : cardBorder),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                       ),
-                                    );
-                                  },
-                                ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 18),
                               Expanded(
@@ -1739,7 +1810,7 @@ class _PosScreenState extends State<PosScreen> {
                   ),
                 ),
                 Container(
-                  width: 380,
+                  width: 370,
                   padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
                   decoration: const BoxDecoration(
                     color: Colors.white,
@@ -1843,27 +1914,7 @@ class _PosScreenState extends State<PosScreen> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                const Text(
-                                  "Payment",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: textSecondary,
-                                  ),
-                                ),
-                                const Spacer(),
-                                Text(
-                                  selectedPaymentMethod,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: textPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
+
                             const SizedBox(height: 16),
                             SizedBox(
                               width: double.infinity,

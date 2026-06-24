@@ -3,7 +3,16 @@ import '../../../models/user_profile.dart';
 import '../../../viewmodels/profile_viewmodel.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final VoidCallback? onNotificationTapped;
+  final bool hasNotification;
+  final VoidCallback? onRefreshTapped;
+
+  const ProfileScreen({
+    super.key,
+    this.onNotificationTapped,
+    this.hasNotification = false,
+    this.onRefreshTapped,
+  });
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -21,10 +30,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool isLoading = true;
   UserProfile? profile;
 
+  late TextEditingController nameController;
+  late TextEditingController phoneController;
+  late TextEditingController emailController;
+  late TextEditingController passwordController;
+  late TextEditingController confirmPasswordController;
+
+  bool obscure1 = true;
+  bool obscure2 = true;
+  bool hasChanges = false;
+  bool isEditing = false;
+
   @override
   void initState() {
     super.initState();
+    nameController = TextEditingController();
+    phoneController = TextEditingController();
+    emailController = TextEditingController();
+    passwordController = TextEditingController();
+    confirmPasswordController = TextEditingController();
+    
+    void checkForChanges() {
+      if (profile == null) return;
+      final bool changed = nameController.text.trim() != profile!.name ||
+          phoneController.text.trim() != profile!.phoneNumber ||
+          passwordController.text.isNotEmpty ||
+          confirmPasswordController.text.isNotEmpty;
+      if (hasChanges != changed) {
+        setState(() {
+          hasChanges = changed;
+        });
+      }
+    }
+
+    nameController.addListener(checkForChanges);
+    phoneController.addListener(checkForChanges);
+    passwordController.addListener(checkForChanges);
+    confirmPasswordController.addListener(checkForChanges);
+
     loadProfile();
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    phoneController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
   }
 
   Future<void> loadProfile() async {
@@ -34,9 +88,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       final result = await profileVM.getCurrentUserProfile();
-      setState(() {
+      if (result != null) {
         profile = result;
-      });
+        nameController.text = profile!.name;
+        phoneController.text = profile!.phoneNumber;
+        emailController.text = profile!.email;
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -51,370 +108,82 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  void showEditProfileDialog() {
+  Future<void> _saveChanges() async {
     if (profile == null) return;
 
-    final nameController = TextEditingController(text: profile!.name);
-    final phoneController = TextEditingController(text: profile!.phoneNumber);
+    try {
+      await profileVM.updateProfile(
+        name: nameController.text.trim(),
+        phoneNumber: phoneController.text.trim(),
+      );
 
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Container(
-          width: 600,
-          padding: const EdgeInsets.all(32),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 54,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFECFDF5),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: const Icon(Icons.manage_accounts_rounded, color: primaryBlue, size: 28),
-                    ),
-                    const SizedBox(width: 18),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Edit Profile", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: textPrimary)),
-                          SizedBox(height: 4),
-                          Text("Update your personal details below.", style: TextStyle(fontSize: 14, color: textSecondary)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("Full Name", style: TextStyle(fontWeight: FontWeight.w700, color: textPrimary)),
-                          const SizedBox(height: 10),
-                          TextField(
-                            controller: nameController,
-                            decoration: InputDecoration(
-                              hintText: "Enter your name",
-                              prefixIcon: const Icon(Icons.person_outline_rounded, color: textSecondary),
-                              filled: true,
-                              fillColor: const Color(0xFFF8FAFC),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
-                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
-                              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: primaryBlue, width: 2)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("Phone Number", style: TextStyle(fontWeight: FontWeight.w700, color: textPrimary)),
-                          const SizedBox(height: 10),
-                          TextField(
-                            controller: phoneController,
-                            keyboardType: TextInputType.phone,
-                            decoration: InputDecoration(
-                              hintText: "Enter phone number",
-                              prefixIcon: const Icon(Icons.phone_outlined, color: textSecondary),
-                              filled: true,
-                              fillColor: const Color(0xFFF8FAFC),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
-                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
-                              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: primaryBlue, width: 2)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 40),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    SizedBox(
-                      height: 52,
-                      width: 140,
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: textSecondary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          side: const BorderSide(color: cardBorder, width: 1.5),
-                        ),
-                        child: const Text("Cancel", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    SizedBox(
-                      height: 52,
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          try {
-                            await profileVM.updateProfile(
-                              name: nameController.text.trim(),
-                              phoneNumber: phoneController.text.trim(),
-                            );
-                            if (!mounted) return;
-                            Navigator.pop(context);
-                            await loadProfile();
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Profile updated successfully")));
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Update failed: $e")));
-                          }
-                        },
-                        icon: const Icon(Icons.save_rounded, size: 20),
-                        label: const Text("Save Changes", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryBlue,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+      final password = passwordController.text.trim();
+      final confirm = confirmPasswordController.text.trim();
+
+      if (password.isNotEmpty) {
+        if (password.length < 6) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Password must be at least 6 characters")));
+          return;
+        }
+        if (password != confirm) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Passwords do not match")));
+          return;
+        }
+        await profileVM.changePassword(newPassword: password);
+        passwordController.clear();
+        confirmPasswordController.clear();
+      }
+
+      await loadProfile();
+      if (mounted) {
+        setState(() {
+          isEditing = false;
+          hasChanges = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Profile updated successfully")));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Update failed: $e")));
+      }
+    }
   }
 
-  void showChangePasswordDialog() {
-    final passwordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
-
-    bool obscure1 = true;
-    bool obscure2 = true;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => Dialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          child: Container(
-            width: 600,
-            padding: const EdgeInsets.all(32),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 54,
-                        height: 54,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFEF2F2),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: const Icon(Icons.lock_reset_rounded, color: Colors.red, size: 28),
-                      ),
-                      const SizedBox(width: 18),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Change Password", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: textPrimary)),
-                            SizedBox(height: 4),
-                            Text("Secure your account with a new password.", style: TextStyle(fontSize: 14, color: textSecondary)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text("New Password", style: TextStyle(fontWeight: FontWeight.w700, color: textPrimary)),
-                            const SizedBox(height: 10),
-                            TextField(
-                              controller: passwordController,
-                              obscureText: obscure1,
-                              decoration: InputDecoration(
-                                hintText: "Enter new password",
-                                prefixIcon: const Icon(Icons.lock_outline_rounded, color: textSecondary),
-                                suffixIcon: IconButton(
-                                  icon: Icon(obscure1 ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: textSecondary),
-                                  onPressed: () => setDialogState(() => obscure1 = !obscure1),
-                                ),
-                                filled: true,
-                                fillColor: const Color(0xFFF8FAFC),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
-                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
-                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: primaryBlue, width: 2)),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text("Confirm Password", style: TextStyle(fontWeight: FontWeight.w700, color: textPrimary)),
-                            const SizedBox(height: 10),
-                            TextField(
-                              controller: confirmPasswordController,
-                              obscureText: obscure2,
-                              decoration: InputDecoration(
-                                hintText: "Confirm new password",
-                                prefixIcon: const Icon(Icons.lock_reset_rounded, color: textSecondary),
-                                suffixIcon: IconButton(
-                                  icon: Icon(obscure2 ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: textSecondary),
-                                  onPressed: () => setDialogState(() => obscure2 = !obscure2),
-                                ),
-                                filled: true,
-                                fillColor: const Color(0xFFF8FAFC),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
-                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: cardBorder)),
-                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: primaryBlue, width: 2)),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 40),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      SizedBox(
-                        height: 52,
-                        width: 140,
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: textSecondary,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            side: const BorderSide(color: cardBorder, width: 1.5),
-                          ),
-                          child: const Text("Cancel", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      SizedBox(
-                        height: 52,
-                        child: ElevatedButton.icon(
-                          onPressed: () async {
-                            final password = passwordController.text.trim();
-                            final confirm = confirmPasswordController.text.trim();
-                            if (password.length < 6) {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Password must be at least 6 characters")));
-                              return;
-                            }
-                            if (password != confirm) {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Passwords do not match")));
-                              return;
-                            }
-                            try {
-                              await profileVM.changePassword(newPassword: password);
-                              if (!mounted) return;
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Password updated successfully")));
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Update failed: $e")));
-                            }
-                          },
-                          icon: const Icon(Icons.check_circle_rounded, size: 20),
-                          label: const Text("Update Password", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget buildInfoTile({
-    required IconData icon,
+  Widget _buildTextField({
     required String label,
-    required String value,
+    required TextEditingController controller,
+    bool readOnly = false,
+    bool isPassword = false,
+    bool obscureText = false,
+    VoidCallback? onToggleObscure,
+    TextInputType keyboardType = TextInputType.text,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFECFDF5),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: primaryBlue),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: textPrimary, fontSize: 14)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          readOnly: readOnly,
+          obscureText: isPassword && obscureText,
+          keyboardType: keyboardType,
+          style: TextStyle(color: readOnly ? textSecondary : textPrimary),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: readOnly ? const Color(0xFFF1F5F9) : const Color(0xFFF8FAFC),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            suffixIcon: isPassword
+                ? IconButton(
+                    icon: Icon(obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: textSecondary),
+                    onPressed: onToggleObscure,
+                  )
+                : null,
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value.isEmpty ? "-" : value,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 
@@ -437,30 +206,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   )
                 : Column(
                     children: [
+                      // Header
                       Container(
                         padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          border: Border(
-                            bottom: BorderSide(color: cardBorder),
-                          ),
-                        ),
                         child: Row(
                           children: [
-                            Container(
-                              width: 56,
-                              height: 56,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFECFDF5),
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              child: const Icon(
-                                Icons.person_rounded,
-                                color: primaryBlue,
-                                size: 30,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
                             const Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -484,127 +234,251 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ],
                               ),
                             ),
+                            const SizedBox(width: 16),
+                            Row(
+                              children: [
+                                Container(
+                                  height: 40,
+                                  width: 40,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: IconButton(
+                                      onPressed: widget.onNotificationTapped,
+                                      tooltip: "Notifications",
+                                      icon: Icon(
+                                        widget.hasNotification
+                                            ? Icons.notifications_active_rounded
+                                            : Icons.notifications_none_rounded,
+                                        size: 20,
+                                      ),
+                                      color: const Color(0xFF64748B),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      splashRadius: 20,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Container(
+                                  height: 40,
+                                  width: 40,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: IconButton(
+                                      onPressed: widget.onRefreshTapped,
+                                      tooltip: "Refresh",
+                                      icon: const Icon(Icons.refresh_rounded, size: 20),
+                                      color: const Color(0xFF64748B),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      splashRadius: 20,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
+                      
+                      // Body Layout
                       Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
+                        child: Container(
+                          margin: const EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: cardBorder),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.04),
+                                blurRadius: 18,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(24),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(24),
-                                  border: Border.all(color: cardBorder),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.04),
-                                      blurRadius: 18,
-                                      offset: const Offset(0, 8),
-                                    ),
-                                  ],
-                                ),
+                              // Left Side: Avatar and Role
+                              Expanded(
+                                flex: 2,
                                 child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     CircleAvatar(
-                                      radius: 42,
-                                      backgroundColor: const Color(0xFFECFDF5),
+                                      radius: 80,
+                                      backgroundColor: primaryBlue,
                                       child: Text(
                                         profile!.name.isNotEmpty
                                             ? profile!.name[0].toUpperCase()
                                             : "U",
                                         style: const TextStyle(
-                                          fontSize: 28,
+                                          fontSize: 64,
                                           fontWeight: FontWeight.w700,
-                                          color: primaryBlue,
+                                          color: Colors.white,
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      profile!.name.isEmpty
-                                          ? "No Name"
-                                          : profile!.name,
-                                      style: const TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w700,
-                                        color: textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
+                                    const SizedBox(height: 24),
                                     Text(
                                       profile!.role.isEmpty
                                           ? "User"
-                                          : profile!.role[0].toUpperCase() +
-                                              profile!.role.substring(1),
+                                          : profile!.role[0].toUpperCase() + profile!.role.substring(1),
                                       style: const TextStyle(
-                                        fontSize: 14,
-                                        color: textSecondary,
+                                        fontSize: 18,
+                                        color: textPrimary,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
+                                    if (!isEditing) ...[
+                                      const SizedBox(height: 16),
+                                      ElevatedButton.icon(
+                                        onPressed: () {
+                                          setState(() {
+                                            isEditing = true;
+                                          });
+                                        },
+                                        icon: const Icon(Icons.edit_rounded, size: 16),
+                                        label: const Text("Edit Profile"),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.white,
+                                          foregroundColor: primaryBlue, // Also changing text/icon color to green to match border nicely
+                                          elevation: 0,
+                                          side: const BorderSide(color: primaryBlue, width: 1.5),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 22),
-                              buildInfoTile(
-                                icon: Icons.person_outline_rounded,
-                                label: "Full Name",
-                                value: profile!.name,
+                              
+                              // Vertical Divider
+                              Container(
+                                width: 2,
+                                margin: const EdgeInsets.symmetric(horizontal: 32),
+                                color: cardBorder,
                               ),
-                              const SizedBox(height: 14),
-                              buildInfoTile(
-                                icon: Icons.email_outlined,
-                                label: "Email Address",
-                                value: profile!.email,
-                              ),
-                              const SizedBox(height: 14),
-                              buildInfoTile(
-                                icon: Icons.phone_outlined,
-                                label: "Phone Number",
-                                value: profile!.phoneNumber,
-                              ),
-                              const SizedBox(height: 24),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  onPressed: showEditProfileDialog,
-                                  icon: const Icon(Icons.edit_rounded),
-                                  label: const Text("Edit Profile"),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: primaryBlue,
-                                    foregroundColor: Colors.white,
-                                    elevation: 0,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                  ),
+                              
+                              // Right Side: Form
+                              Expanded(
+                                flex: 3,
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    return SingleChildScrollView(
+                                      child: ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          minHeight: constraints.maxHeight,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            _buildTextField(label: "Name", controller: nameController, readOnly: !isEditing),
+                                            _buildTextField(label: "Phone Number", controller: phoneController, keyboardType: TextInputType.phone, readOnly: !isEditing),
+                                            _buildTextField(label: "Email", controller: emailController, readOnly: true),
+                                            
+                                            AnimatedSize(
+                                              duration: const Duration(milliseconds: 400),
+                                              curve: Curves.easeOutCubic,
+                                              alignment: Alignment.topCenter,
+                                              child: AnimatedSwitcher(
+                                                duration: const Duration(milliseconds: 300),
+                                                switchInCurve: Curves.easeOut,
+                                                switchOutCurve: Curves.easeIn,
+                                                child: !isEditing
+                                                    ? const SizedBox(key: ValueKey('empty'), width: double.infinity)
+                                                    : Column(
+                                                        key: const ValueKey('edit_form'),
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          if (profile!.role != 'cashier') ...[
+                                                            _buildTextField(
+                                                              label: "New Password", 
+                                                              controller: passwordController,
+                                                              isPassword: true,
+                                                              obscureText: obscure1,
+                                                              onToggleObscure: () => setState(() => obscure1 = !obscure1),
+                                                            ),
+                                                            _buildTextField(
+                                                              label: "Retype New Password", 
+                                                              controller: confirmPasswordController,
+                                                              isPassword: true,
+                                                              obscureText: obscure2,
+                                                              onToggleObscure: () => setState(() => obscure2 = !obscure2),
+                                                            ),
+                                                          ],
+                                                          const SizedBox(height: 16),
+                                                          Row(
+                                                            children: [
+                                                              Expanded(
+                                                                child: SizedBox(
+                                                                  height: 52,
+                                                                  child: ElevatedButton(
+                                                                    onPressed: () {
+                                                                      // Reset changes
+                                                                      nameController.text = profile!.name;
+                                                                      phoneController.text = profile!.phoneNumber;
+                                                                      passwordController.clear();
+                                                                      confirmPasswordController.clear();
+                                                                      setState(() {
+                                                                        isEditing = false;
+                                                                        hasChanges = false;
+                                                                      });
+                                                                    },
+                                                                    style: ElevatedButton.styleFrom(
+                                                                      backgroundColor: Colors.grey.shade200,
+                                                                      foregroundColor: textPrimary,
+                                                                      elevation: 0,
+                                                                      shape: RoundedRectangleBorder(
+                                                                        borderRadius: BorderRadius.circular(30),
+                                                                      ),
+                                                                    ),
+                                                                    child: const Text("Cancel", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              const SizedBox(width: 16),
+                                                              Expanded(
+                                                                child: SizedBox(
+                                                                  height: 52,
+                                                                  child: ElevatedButton(
+                                                                    onPressed: _saveChanges,
+                                                                    style: ElevatedButton.styleFrom(
+                                                                      backgroundColor: primaryBlue,
+                                                                      foregroundColor: Colors.white,
+                                                                      elevation: 0,
+                                                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                                                                    ),
+                                                                    child: const Text("Save", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }
                                 ),
                               ),
-                              if (profile!.role != 'cashier') ...[
-                                const SizedBox(height: 12),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: OutlinedButton.icon(
-                                    onPressed: showChangePasswordDialog,
-                                    icon: const Icon(Icons.lock_reset_rounded),
-                                    label: const Text("Change Password"),
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 16,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      side: const BorderSide(color: cardBorder),
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ],
                           ),
                         ),
